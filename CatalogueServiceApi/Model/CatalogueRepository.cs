@@ -15,14 +15,18 @@ namespace Model
         private readonly IMongoCollection<User> _user;
         private readonly IMongoCollection<Category> _category;
 
+        
+
         public CatalogueRepository()
         {
-            var client = new MongoClient("mongodb://admin:1234@localhost:27018/?authSource=admin"); // vores mongo conn string
-            var database = client.GetDatabase("Auctionhouse"); // vores database
+            string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING"); // mongo conn string miljøvariabel
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase("Auctionhouse");
             _artifact = database.GetCollection<Artifact>("Artifact");
             _user = database.GetCollection<User>("User");
             _category = database.GetCollection<Category>("Category");
         }
+
 
 
         //GET
@@ -56,6 +60,7 @@ namespace Model
 
 
 
+
         //POST
         public void AddNewArtifact(Artifact? artifact)
         {
@@ -66,6 +71,8 @@ namespace Model
         {
             _category.InsertOne(category!);
         }
+
+
 
 
         //DELETE
@@ -80,6 +87,7 @@ namespace Model
             var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
             await _category.DeleteOneAsync(filter);
         }
+
 
 
 

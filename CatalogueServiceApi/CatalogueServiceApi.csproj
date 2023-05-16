@@ -23,6 +23,9 @@
     <InformationalVersion>1.1.0</InformationalVersion>
     <Description>Added Semantisk version-endepunkt</Description>
 
+    <InformationalVersion>1.2.0</InformationalVersion>
+    <Description>Added Mongo conn string miljøvariabel</Description>
+
 
 
   </PropertyGroup>

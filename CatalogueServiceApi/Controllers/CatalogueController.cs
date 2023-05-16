@@ -40,7 +40,7 @@ public class CatalogueController : ControllerBase
         _catalogueRepository = catalogueRepository;
 
     }
-
+    
     //VERSION_ENDEPUNKT
     [HttpGet("version")]
     public IActionResult GetVersion()

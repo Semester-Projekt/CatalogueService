@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Model;
 using Controllers;
@@ -19,6 +20,8 @@ using Microsoft.AspNetCore.Http;
 using MongoDB.Driver;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
+using System.IO;
 
 namespace Controllers;
 
@@ -38,6 +41,7 @@ public class CatalogueController : ControllerBase
         _catalogueRepository = catalogueRepository;
 
     }
+
 
 
     //GET
@@ -237,6 +241,7 @@ public class CatalogueController : ControllerBase
     }
 
 
+
     //PUT
     [Authorize]
     [HttpPost("updateArtifact"), DisableRequestSizeLimit]
@@ -245,5 +250,27 @@ public class CatalogueController : ControllerBase
         // not yet implemented
         return Ok();
     }
+
+
+
+    [HttpGet("version")]
+    public IActionResult GetVersion()
+    {
+        var assembly = typeof(Program).Assembly;
+
+        
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description;
+
+        var versionInfo = new
+        {
+            InformationalVersion = informationalVersion,
+            Description = description
+        };
+
+        return Ok(versionInfo);
+    }
+
+
 
 }

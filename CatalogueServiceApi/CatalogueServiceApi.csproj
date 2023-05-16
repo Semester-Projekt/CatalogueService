@@ -4,10 +4,28 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+
+    <Group>Daniels gruppe</Group>
+    <Authors>
+        Daniel B
+        Daniel D
+        Mads K
+        Mads-Emil J
+    </Authors>
+
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <Description>
+        Workaing Main-udgave
+    </Description>
+
   </PropertyGroup>
+
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
+
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />

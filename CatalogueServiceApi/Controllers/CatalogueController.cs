@@ -196,7 +196,7 @@ public class CatalogueController : ControllerBase
         };
         _logger.LogInformation("new Category object made. CategoryCode: " + newCategory.CategoryCode);
 
-
+        
         if (newCategory.CategoryCode == null)
         {
             return BadRequest("Invalid Code: " + newCategory.CategoryCode);
@@ -222,6 +222,7 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("deleteArtifact function hit");
 
+        
         var deletedArtifact = await GetArtifactById(id);
         _logger.LogInformation("ID for deletion: " + deletedArtifact);
 
@@ -245,9 +246,29 @@ public class CatalogueController : ControllerBase
 
         var deletedCategory = await GetCategoryByCode(categoryCode);
 
+        //henter alle artifacts med categoryCode til deletion:
+        var categoryArtifacts = new List<Artifact>();
+        List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result;
+        for (int i = 0; i < allArtifacts.Count; i++)
+        {
+            if (allArtifacts[i].CategoryCode == categoryCode)
+            {
+                categoryArtifacts.Add(allArtifacts[i]);
+            }
+        }
+        _logger.LogInformation("This category contains this many artifacts: " + categoryArtifacts.Count());
+        
+        
+
+
         if (deletedCategory == null)
         {
             return BadRequest("CategoryCode is null");
+        }
+        else if (categoryArtifacts.Count() > 0)
+        {
+            _logger.LogInformation("Cannot delete category containing Artifacts");
+            return BadRequest($"Cannot delete category containing Artifacts. There are still {categoryArtifacts.Count()} Artifacts in the category");
         }
         else
         {

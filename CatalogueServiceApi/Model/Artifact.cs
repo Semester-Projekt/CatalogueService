@@ -30,13 +30,13 @@ namespace Model
         public string ArtifactOwner { get; set; } // er dette rigtigt? skal evt laves om til string Name
 
         [BsonElement("Estimate")]
-        public int Estimate { get; set; }
+        public int Estimate { get; set; } = 0;
 
-
-        /*
         [BsonElement("ArtifactPicture")]
-        public string ArtifactPicture { get; set; } // hvordan uploader vi et billede?
-        */
+        public string? ArtifactPicture { get; set; } = null; // hvordan uploader vi et billede?
+
+        [BsonElement("Active")]
+        public bool Active { get; set; } = false;
 
 
         public Artifact(int artifactID, string artifactName, string artifactDescription, int estimate, string categoryCode, string artifactOwner)

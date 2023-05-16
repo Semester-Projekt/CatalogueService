@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
 
 
-    <Group>Daniels gruppe</Group>
+    <Company>Daniels gruppe</Company>
     <Authors>
         Daniel B
         Daniel D
@@ -14,10 +14,16 @@
         Mads-Emil J
     </Authors>
 
+    <AssemblyVersion>1.0.1.1</AssemblyVersion>
+    <FileVersion>1.0.1.1</FileVersion>
+
     <InformationalVersion>1.0.0</InformationalVersion>
-    <Description>
-        Workaing Main-udgave
-    </Description>
+    <Description>Workaing Main-udgave</Description>
+
+    <InformationalVersion>1.1.0</InformationalVersion>
+    <Description>Added Semantisk version-endepunkt</Description>
+
+
 
   </PropertyGroup>
 

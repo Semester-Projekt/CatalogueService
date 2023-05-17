@@ -23,7 +23,7 @@ namespace Model
         [BsonElement("CategoryDescription")]
         public string CategoryDescription { get; set; }
         
-        public List<Artifact> CategoryArtifacts { get; internal set; }
+        public List<Artifact>? CategoryArtifacts { get; internal set; }
 
         public Category()
         {

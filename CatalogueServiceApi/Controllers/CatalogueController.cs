@@ -216,6 +216,7 @@ public class CatalogueController : ControllerBase
 
 
     //DELETE
+    /*
     [Authorize]
     [HttpDelete("deleteArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> DeleteArtifact(int id)
@@ -237,6 +238,30 @@ public class CatalogueController : ControllerBase
             return Ok(deletedArtifact);
         }
     }
+    */
+
+    [Authorize]
+    [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
+    public async Task<string> DeleteArtifact(int id, [FromBody] Artifact artifact)
+    {
+        _logger.LogInformation("deleteArtifact function hit");
+
+        var deletedArtifact = await GetArtifactById(id);
+        _logger.LogInformation("ID for deletion: " + deletedArtifact);
+
+        if (deletedArtifact == null)
+        {
+            return "ArtifactID is null";
+        }
+        else
+        {
+            await _catalogueRepository.DeleteArtifact(id, artifact);
+        }
+
+
+        return "Artifact status changed to 'Deleted'";
+    }
+
 
     [Authorize]
     [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]

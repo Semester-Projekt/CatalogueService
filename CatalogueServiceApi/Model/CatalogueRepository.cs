@@ -12,10 +12,10 @@ namespace Model
     public class CatalogueRepository
     {
         private readonly IMongoCollection<Artifact> _artifact;
+        private readonly IMongoCollection<Artifact> _archivedArtifact;
         private readonly IMongoCollection<User> _user;
         private readonly IMongoCollection<Category> _category;
 
-        
 
         public CatalogueRepository()
         {
@@ -23,6 +23,7 @@ namespace Model
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase("Auctionhouse");
             _artifact = database.GetCollection<Artifact>("Artifact");
+            _archivedArtifact = database.GetCollection<Artifact>("ArchivedArtifact");
             _user = database.GetCollection<User>("User");
             _category = database.GetCollection<Category>("Category");
         }
@@ -67,6 +68,14 @@ namespace Model
             _artifact.InsertOne(artifact!);
         }
 
+        public void AddNewArchivedArtifact(Artifact? artifact)
+        {
+            _archivedArtifact.InsertOne(artifact!);
+        }
+
+        
+
+
         public void AddNewCategory(Category? category)
         {
             _category.InsertOne(category!);
@@ -76,11 +85,25 @@ namespace Model
 
 
         //DELETE
+        /*
         public async Task DeleteArtifact(int id)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
             await _artifact.DeleteOneAsync(filter);
         }
+        */
+
+        public async Task DeleteArtifact(int id, Artifact updatedArtifact)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update
+                .Set(a => a.Status, updatedArtifact.Status);
+
+            await _artifact.UpdateOneAsync(filter, update);
+        }
+
+
+
 
         public async Task DeleteCategory(string categoryCode)
         {
@@ -89,7 +112,7 @@ namespace Model
         }
 
 
-
+        
 
         //PUT
         public void UpdateArtifact(int id)

@@ -257,7 +257,7 @@ public class CatalogueController : ControllerBase
             }
         }
         _logger.LogInformation("This category contains this many artifacts: " + categoryArtifacts.Count());
-        
+        //sikrer at man ikke sletter en kategori der inderholder Artifacts
         
 
 

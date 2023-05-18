@@ -115,14 +115,25 @@ namespace Model
         
 
         //PUT
-        public void UpdateArtifact(int id)
+        public async Task UpdateArtifact(int id, Artifact? artifact)
         {
-            //Not yet implemented
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update.
+                Set(a => a.ArtifactName, artifact.ArtifactName).
+                Set(a => a.ArtifactDescription, artifact.ArtifactDescription).
+                Set(a => a.CategoryCode, artifact.CategoryCode).
+                Set(a => a.Estimate, artifact.Estimate);
+
+            await _artifact.UpdateOneAsync(filter, update);
         }
 
-        public void UpdateCategory(string categoryCode)
+        public async Task UpdateCategory(string categoryCode, Category category)
         {
-            //Not yet implemented
+            var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
+            var update = Builders<Category>.Update.
+                Set(a => a.CategoryDescription, category.CategoryDescription);
+
+            await _category.UpdateOneAsync(filter, update);
         }
 
 

@@ -148,6 +148,7 @@ public class CatalogueController : ControllerBase
 
 
 
+
     //POST
     [Authorize]
     [HttpPost("addNewArtifact"), DisableRequestSizeLimit]
@@ -224,31 +225,8 @@ public class CatalogueController : ControllerBase
 
 
 
+
     //DELETE
-    /*
-    [Authorize]
-    [HttpDelete("deleteArtifact/{id}"), DisableRequestSizeLimit]
-    public async Task<IActionResult> DeleteArtifact(int id)
-    {
-        _logger.LogInformation("deleteArtifact function hit");
-
-        
-        var deletedArtifact = await GetArtifactById(id);
-        _logger.LogInformation("ID for deletion: " + deletedArtifact);
-
-        if (deletedArtifact == null)
-        {
-            return BadRequest("ArtifactID is null: ");
-        }
-        else
-        {
-            await _catalogueRepository.DeleteArtifact(id);
-            _logger.LogInformation("Artifact deleted");
-            return Ok(deletedArtifact);
-        }
-    }
-    */
-
     [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<string> DeleteArtifact(int id)
@@ -317,13 +295,48 @@ public class CatalogueController : ControllerBase
 
 
 
+
     //PUT
     [Authorize]
-    [HttpPost("updateArtifact"), DisableRequestSizeLimit]
-    public async Task<IActionResult> UpdateArtifact(int id)
+    [HttpPut("updateArtifact/{id}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> UpdateArtifact(int id, [FromBody] Artifact artifact)
     {
-        // not yet implemented
-        return Ok();
+        _logger.LogInformation("UpdateArtifact function hit");
+
+        var updatedArtifact = _catalogueRepository.GetArtifactById(id);
+
+        if (updatedArtifact == null)
+        {
+            return BadRequest("Artifact does not exist");
+        }
+        _logger.LogInformation("Artifact for update: " + updatedArtifact.Result.ArtifactName);
+
+        await _catalogueRepository.UpdateArtifact(id, artifact!);
+
+        var newUpdatedArtifact = _catalogueRepository.GetArtifactById(id);
+
+        return Ok($"Artifact, {updatedArtifact.Result.ArtifactName}, has been updated");
+    }
+
+    [Authorize]
+    [HttpPut("updateCategory/{categoryCode}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> UpdateCategory(string categoryCode, [FromBody] Category? category)
+    {
+        _logger.LogInformation("UpdateCategory function hit");
+
+        var updatedCategory = _catalogueRepository.GetCategoryByCode(categoryCode);
+
+        if (updatedCategory == null)
+        {
+            return BadRequest("Category does not exist");
+        }
+        _logger.LogInformation("Category for update: " + updatedCategory.Result.CategoryName);
+
+        await _catalogueRepository.UpdateCategory(categoryCode, category!);
+
+        var newUpdatedCategory = _catalogueRepository.GetCategoryByCode(categoryCode);
+
+        return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: { newUpdatedCategory.Result.CategoryDescription}");
     }
 
 }

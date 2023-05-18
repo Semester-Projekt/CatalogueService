@@ -15,13 +15,13 @@ namespace Model
         public string? MongoId { get; set; }
 
         [BsonElement("CategoryCode")]
-        public string CategoryCode { get; set; } //skal måske være en 'int'?
+        public string? CategoryCode { get; set; } //skal måske være en 'int'?
 
         [BsonElement("CategoryName")]
-        public string CategoryName { get; set; }
+        public string? CategoryName { get; set; }
 
         [BsonElement("CategoryDescription")]
-        public string CategoryDescription { get; set; }
+        public string? CategoryDescription { get; set; }
         
         public List<Artifact>? CategoryArtifacts { get; internal set; }
 

@@ -13,7 +13,6 @@ namespace Model
     {
         private readonly IMongoCollection<Artifact> _artifact;
         private readonly IMongoCollection<Artifact> _archivedArtifact;
-        private readonly IMongoCollection<User> _user;
         private readonly IMongoCollection<Category> _category;
 
 
@@ -21,14 +20,13 @@ namespace Model
         {
             string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING"); // mongo conn string miljøvariabel
             var client = new MongoClient(connectionString);
-            var database = client.GetDatabase("Auctionhouse");
-            _artifact = database.GetCollection<Artifact>("Artifact");
-            _archivedArtifact = database.GetCollection<Artifact>("ArchivedArtifact");
-            _user = database.GetCollection<User>("User");
-            _category = database.GetCollection<Category>("Category");
+            var database = client.GetDatabase("Catalogue");
+            _artifact = database.GetCollection<Artifact>("Artifacts");
+            _archivedArtifact = database.GetCollection<Artifact>("ArchivedArtifacts");
+            _category = database.GetCollection<Category>("Categories");
         }
-
-
+        
+        
 
         //GET
         public async Task<List<Artifact>> GetAllArtifacts()

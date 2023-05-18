@@ -137,7 +137,7 @@ public class CatalogueController : ControllerBase
             Artifacts = category.CategoryArtifacts.Select(a => new {
                 ArtifactName = a.ArtifactName,
                 ArtifactDescription = a.ArtifactDescription,
-                ArtifactOwner = a.ArtifactOwner,
+                ArtifactOwner = a.ArtifactOwner.UserName,
                 Estimate = a.Estimate
             }).ToList()
         };
@@ -153,69 +153,90 @@ public class CatalogueController : ControllerBase
 
     //GET USER FRA USER DATABASE
     [HttpGet("getuser/{id}"), DisableRequestSizeLimit]
-    public async Task<IActionResult> GetUser(int id)
+    public async Task<ActionResult<UserDTO>> GetUser(int id)
     {
-        _logger.LogInformation("GetUser function hit");
+        _logger.LogInformation("CatalogueService - GetUser function hit");
 
-        using (HttpClient httpClient = new HttpClient())
+        using (HttpClient client = new HttpClient())
         {
-            string userServiceUrl = "http://localhost:5235";
-            string getUserByIdEndpoint = "/catalogue/getArtifactById/" + id;
+            string userServiceUrl = "http://localhost:5030";
+            string getUserEndpoint = "/user/getUser/" + id;
+
+            _logger.LogInformation(userServiceUrl + getUserEndpoint);
 
 
+            HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve UserId from UserService");
+            }
 
+            UserDTO user = await response.Content.ReadFromJsonAsync<UserDTO>();
+            _logger.LogInformation($"MongId: {user.MongoId}");
+            _logger.LogInformation($"UserName: {user.UserName}");
 
-
-
-            return Ok();
+            return Ok(user);
         }
     }
 
 
-
-
     //POST
     [Authorize]
-    [HttpPost("addNewArtifact"), DisableRequestSizeLimit]
-    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact)
+    [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)
     {
         _logger.LogInformation("addNewArtifact function hit");
 
         int latestID = _catalogueRepository.GetNextArtifactID(); // Gets latest ID in _artifacts + 1
 
-        var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode);
+        var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode);
 
-        if (category == null)
+        var userResponse = await GetUser(userId); // Use await to get the User object
+        
+        _logger.LogInformation("ArtifactOwnerID: " + userId);
+
+        if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
         {
-            return BadRequest("Invalid category code: " + artifact.CategoryCode);
-        }
+            _logger.LogInformation("ArtifactOwnerMongo: " + artifactOwner.MongoId);
+            _logger.LogInformation("ArtifactOwnerName: " + artifactOwner.UserName);
 
-        var newArtifact = new Artifact
-        {
-            ArtifactID = latestID,
-            ArtifactName = artifact!.ArtifactName,
-            ArtifactDescription = artifact.ArtifactDescription,
-            CategoryCode = artifact.CategoryCode,
-            ArtifactOwner = artifact.ArtifactOwner,
-            Estimate = artifact.Estimate,
-        };
-        _logger.LogInformation("new Artifact object made. ArtifactID: " + newArtifact.ArtifactID);
+            if (category == null)
+            {
+                return BadRequest("Invalid category code: " + artifact.CategoryCode);
+            }
+
+            var newArtifact = new Artifact
+            {
+                ArtifactID = latestID,
+                ArtifactName = artifact!.ArtifactName,
+                ArtifactDescription = artifact.ArtifactDescription,
+                CategoryCode = artifact.CategoryCode,
+                ArtifactOwner = artifactOwner, // Use the UserName property of the User object
+                Estimate = artifact.Estimate,
+            };
+            _logger.LogInformation("new Artifact object made. ArtifactID: " + newArtifact.ArtifactID);
 
 
-        if (newArtifact.ArtifactID == 0)
-        {
-            return BadRequest("Invalid ID: " + newArtifact.ArtifactID);
+            if (newArtifact.ArtifactID == 0)
+            {
+                return BadRequest("Invalid ID: " + newArtifact.ArtifactID);
+            }
+            else
+            {
+                _catalogueRepository.AddNewArtifact(newArtifact);
+            }
+            _logger.LogInformation("new Artifact object added to _artifacts");
+
+
+            return Ok(newArtifact);
         }
         else
         {
-            _catalogueRepository.AddNewArtifact(newArtifact);
+            return BadRequest("Failed to retrieve User object");
         }
-        _logger.LogInformation("new Artifact object added to _artifacts");
-
-
-        return Ok(newArtifact);
-
     }
+
+
 
     [Authorize]
     [HttpPost("addNewCategory"), DisableRequestSizeLimit]

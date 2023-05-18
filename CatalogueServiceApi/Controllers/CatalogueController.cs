@@ -149,6 +149,31 @@ public class CatalogueController : ControllerBase
 
 
 
+
+
+    //GET USER FRA USER DATABASE
+    [HttpGet("getuser/{id}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> GetUser(int id)
+    {
+        _logger.LogInformation("GetUser function hit");
+
+        using (HttpClient httpClient = new HttpClient())
+        {
+            string userServiceUrl = "http://localhost:5235";
+            string getUserByIdEndpoint = "/catalogue/getArtifactById/" + id;
+
+
+
+
+
+
+            return Ok();
+        }
+    }
+
+
+
+
     //POST
     [Authorize]
     [HttpPost("addNewArtifact"), DisableRequestSizeLimit]

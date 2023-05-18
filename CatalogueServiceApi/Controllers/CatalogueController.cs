@@ -74,7 +74,16 @@ public class CatalogueController : ControllerBase
 
         _logger.LogInformation("Selected Artifact: " + artifact.ArtifactName);
 
-        return Ok(artifact);
+
+        var filteredArtifact = new
+        {
+            artifact.ArtifactName,
+            artifact.ArtifactDescription,
+            artifact.ArtifactOwner,
+            artifact.ArtifactPicture
+        };
+
+        return Ok(filteredArtifact);
 
         // evt noget filtrering på hvad andre brugere ser af data?
     }

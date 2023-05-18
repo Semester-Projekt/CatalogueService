@@ -12,10 +12,10 @@ namespace Model
     public class CatalogueRepository
     {
         private readonly IMongoCollection<Artifact> _artifact;
+        private readonly IMongoCollection<Artifact> _archivedArtifact;
         private readonly IMongoCollection<User> _user;
         private readonly IMongoCollection<Category> _category;
 
-        
 
         public CatalogueRepository()
         {
@@ -23,6 +23,7 @@ namespace Model
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase("Auctionhouse");
             _artifact = database.GetCollection<Artifact>("Artifact");
+            _archivedArtifact = database.GetCollection<Artifact>("ArchivedArtifact");
             _user = database.GetCollection<User>("User");
             _category = database.GetCollection<Category>("Category");
         }
@@ -67,6 +68,14 @@ namespace Model
             _artifact.InsertOne(artifact!);
         }
 
+        public void AddNewArchivedArtifact(Artifact? artifact)
+        {
+            _archivedArtifact.InsertOne(artifact!);
+        }
+
+        
+
+
         public void AddNewCategory(Category? category)
         {
             _category.InsertOne(category!);
@@ -76,11 +85,25 @@ namespace Model
 
 
         //DELETE
+        /*
         public async Task DeleteArtifact(int id)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
             await _artifact.DeleteOneAsync(filter);
         }
+        */
+
+        public async Task DeleteArtifact(int id)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update
+                .Set(a => a.Status, "Deleted");
+
+            await _artifact.UpdateOneAsync(filter, update);
+        }
+
+
+
 
         public async Task DeleteCategory(string categoryCode)
         {
@@ -89,17 +112,28 @@ namespace Model
         }
 
 
-
+        
 
         //PUT
-        public void UpdateArtifact(int id)
+        public async Task UpdateArtifact(int id, Artifact? artifact)
         {
-            //Not yet implemented
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update.
+                Set(a => a.ArtifactName, artifact.ArtifactName).
+                Set(a => a.ArtifactDescription, artifact.ArtifactDescription).
+                Set(a => a.CategoryCode, artifact.CategoryCode).
+                Set(a => a.Estimate, artifact.Estimate);
+
+            await _artifact.UpdateOneAsync(filter, update);
         }
 
-        public void UpdateCategory(string categoryCode)
+        public async Task UpdateCategory(string categoryCode, Category category)
         {
-            //Not yet implemented
+            var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
+            var update = Builders<Category>.Update.
+                Set(a => a.CategoryDescription, category.CategoryDescription);
+
+            await _category.UpdateOneAsync(filter, update);
         }
 
 

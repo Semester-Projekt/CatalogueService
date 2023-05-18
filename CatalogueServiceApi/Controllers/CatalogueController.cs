@@ -64,7 +64,7 @@ public class CatalogueController : ControllerBase
 
 
     //GET
-    [Authorize]
+    //[Authorize] HUSK AT FJERNE UDKOMMENTERING HER
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetArtifactById(int id)
     {

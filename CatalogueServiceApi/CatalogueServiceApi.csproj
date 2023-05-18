@@ -36,9 +36,6 @@
 
 
   <ItemGroup>
-    <None Remove="MonitorCatalogueService\" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageReference Include="Nlog.Web.AspNetCore" Version="5.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
@@ -70,7 +67,4 @@
 
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="MonitorCatalogueService\" />
-  </ItemGroup>
 </Project>

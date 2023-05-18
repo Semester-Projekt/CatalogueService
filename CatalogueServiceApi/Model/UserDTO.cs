@@ -5,11 +5,12 @@ using System;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Model
 {
-	public class User
-	{
+    public class UserDTO
+    {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? MongoId { get; set; }
@@ -17,16 +18,25 @@ namespace Model
         [BsonElement("UserName")]
         public string UserName { get; set; }
 
+        [BsonElement("UserEmail")]
+        public string UserEmail { get; set; }
 
-        public User(string userName)
+        [BsonElement("UserPhone")]
+        public int UserPhone { get; set; }
+
+
+        public UserDTO(string userName, string userEmail, int userPhone)
         {
+            //this.MongoId = mongoId;
             this.UserName = userName;
+            this.UserEmail = userEmail;
+            this.UserPhone = userPhone;
         }
 
-        public User()
-		{
+        public UserDTO()
+        {
 
-		}
-	}
+        }
+    }
 }
 

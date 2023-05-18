@@ -251,7 +251,7 @@ public class CatalogueController : ControllerBase
 
     [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
-    public async Task<string> DeleteArtifact(int id, [FromBody] Artifact artifact)
+    public async Task<string> DeleteArtifact(int id)
     {
         _logger.LogInformation("deleteArtifact function hit");
 
@@ -264,7 +264,7 @@ public class CatalogueController : ControllerBase
         }
         else
         {
-            await _catalogueRepository.DeleteArtifact(id, artifact);
+            await _catalogueRepository.DeleteArtifact(id);
         }
 
 

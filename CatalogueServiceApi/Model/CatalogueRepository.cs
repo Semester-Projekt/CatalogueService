@@ -93,11 +93,11 @@ namespace Model
         }
         */
 
-        public async Task DeleteArtifact(int id, Artifact updatedArtifact)
+        public async Task DeleteArtifact(int id)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
             var update = Builders<Artifact>.Update
-                .Set(a => a.Status, updatedArtifact.Status);
+                .Set(a => a.Status, "Deleted");
 
             await _artifact.UpdateOneAsync(filter, update);
         }

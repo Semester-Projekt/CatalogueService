@@ -63,8 +63,10 @@ public class CatalogueController : ControllerBase
 
 
 
+
+
     //GET
-    //[Authorize] HUSK AT FJERNE UDKOMMENTERING HER
+    [Authorize]
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetArtifactById(int id)
     {
@@ -156,12 +158,6 @@ public class CatalogueController : ControllerBase
         return Ok(result);
     }
 
-
-
-
-
-
-
     //GET USER FRA USER DATABASE
     [Authorize]
     [HttpGet("getUser/{id}"), DisableRequestSizeLimit]
@@ -206,10 +202,11 @@ public class CatalogueController : ControllerBase
                     Status = a.Status
                 }).ToList()
             };
-            
+
             return Ok(result);
         }
     }
+
 
 
 
@@ -287,8 +284,6 @@ public class CatalogueController : ControllerBase
         }
     }
 
-
-
     [Authorize]
     [HttpPost("addNewCategory"), DisableRequestSizeLimit]
     public IActionResult AddNewCategory([FromBody] Category? category)
@@ -337,75 +332,6 @@ public class CatalogueController : ControllerBase
 
 
 
-    //DELETE
-    [Authorize]
-    [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
-    public async Task<string> DeleteArtifact(int id)
-    {
-        _logger.LogInformation("deleteArtifact function hit");
-
-        var deletedArtifact = await GetArtifactById(id);
-        _logger.LogInformation("ID for deletion: " + deletedArtifact);
-
-        if (deletedArtifact == null)
-        {
-            return "ArtifactID is null";
-        }
-        else
-        {
-            await _catalogueRepository.DeleteArtifact(id);
-        }
-
-
-        return "Artifact status changed to 'Deleted'";
-    }
-
-
-    [Authorize]
-    [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]
-    public async Task<IActionResult> DeleteCategory(string categoryCode)
-    {
-        _logger.LogInformation("deleteCategory function hit");
-
-        var deletedCategory = await GetCategoryByCode(categoryCode);
-
-        //henter alle artifacts med categoryCode til deletion:
-        var categoryArtifacts = new List<Artifact>();
-        List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result;
-        for (int i = 0; i < allArtifacts.Count(); i++)
-        {
-            if (allArtifacts[i].CategoryCode == categoryCode)
-            {
-                categoryArtifacts.Add(allArtifacts[i]);
-            }
-        }
-        _logger.LogInformation("This category contains this many artifacts: " + categoryArtifacts.Count());
-        //sikrer at man ikke sletter en kategori der inderholder Artifacts
-
-
-
-        if (deletedCategory == null)
-        {
-            return BadRequest("CategoryCode is null");
-        }
-        else if (categoryArtifacts.Count() > 0)
-        {
-            _logger.LogInformation("Cannot delete category containing Artifacts");
-            return BadRequest($"Cannot delete category containing Artifacts. There are still {categoryArtifacts.Count()} Artifacts in the category");
-        }
-        else
-        {
-            await _catalogueRepository.DeleteCategory(categoryCode);
-            _logger.LogInformation($"Category deleted");
-        }
-
-
-        return (IActionResult)Ok(GetAllCategories()).Value!;
-    }
-
-
-
-
 
     //PUT
     [Authorize]
@@ -450,4 +376,72 @@ public class CatalogueController : ControllerBase
         return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
+
+    
+
+
+
+    //DELETE
+    [Authorize]
+    [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
+    public async Task<string> DeleteArtifact(int id)
+    {
+        _logger.LogInformation("deleteArtifact function hit");
+
+        var deletedArtifact = await GetArtifactById(id);
+        _logger.LogInformation("ID for deletion: " + deletedArtifact);
+
+        if (deletedArtifact == null)
+        {
+            return "ArtifactID is null";
+        }
+        else
+        {
+            await _catalogueRepository.DeleteArtifact(id);
+        }
+
+
+        return "Artifact status changed to 'Deleted'";
+    }
+
+    [Authorize]
+    [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> DeleteCategory(string categoryCode)
+    {
+        _logger.LogInformation("deleteCategory function hit");
+
+        var deletedCategory = await GetCategoryByCode(categoryCode);
+
+        //henter alle artifacts med categoryCode til deletion:
+        var categoryArtifacts = new List<Artifact>();
+        List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result;
+        for (int i = 0; i < allArtifacts.Count(); i++)
+        {
+            if (allArtifacts[i].CategoryCode == categoryCode)
+            {
+                categoryArtifacts.Add(allArtifacts[i]);
+            }
+        }
+        _logger.LogInformation("This category contains this many artifacts: " + categoryArtifacts.Count());
+        //sikrer at man ikke sletter en kategori der inderholder Artifacts
+
+        if (deletedCategory == null)
+        {
+            return BadRequest("CategoryCode is null");
+        }
+        else if (categoryArtifacts.Count() > 0)
+        {
+            _logger.LogInformation("Cannot delete category containing Artifacts");
+            return BadRequest($"Cannot delete category containing Artifacts. There are still {categoryArtifacts.Count()} Artifacts in the category");
+        }
+        else
+        {
+            await _catalogueRepository.DeleteCategory(categoryCode);
+            _logger.LogInformation($"Category deleted");
+        }
+
+
+        return (IActionResult)Ok(GetAllCategories()).Value!;
+    }
+    
 }

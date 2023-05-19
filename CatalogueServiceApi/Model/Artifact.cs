@@ -27,7 +27,7 @@ namespace Model
         public string? CategoryCode { get; set; }
 
         [BsonElement("ArtifactOwner")]
-        public string? ArtifactOwner { get; set; } // er dette rigtigt? skal evt laves om til string Name
+        public UserDTO? ArtifactOwner { get; set; } // er dette rigtigt? skal evt laves om til User ArtifactOwner
 
         [BsonElement("Estimate")]
         public int? Estimate { get; set; } = 0;
@@ -39,13 +39,12 @@ namespace Model
         public string? Status { get; set; } = "Pending"; // skal "Pending stå på metode?"
 
 
-        public Artifact(int artifactID, string artifactName, string artifactDescription, int estimate, string categoryCode, string artifactOwner)
+        public Artifact(int artifactID, string artifactName, string artifactDescription, int estimate, string categoryCode)
         {
             this.ArtifactID = artifactID;
             this.ArtifactName = artifactName;
             this.ArtifactDescription = artifactDescription;
             this.CategoryCode = categoryCode;
-            this.ArtifactOwner = artifactOwner;
             this.Estimate = estimate;
         }
 

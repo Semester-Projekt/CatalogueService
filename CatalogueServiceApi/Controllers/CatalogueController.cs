@@ -228,7 +228,23 @@ public class CatalogueController : ControllerBase
             _logger.LogInformation("new Artifact object added to _artifacts");
 
 
-            return Ok(newArtifact);
+            var result = new
+            {
+                Artifactname = artifact.ArtifactName,
+                ArtifactDescription = artifact.ArtifactDescription,
+                CategoryCode = artifact.CategoryCode,
+                ArtifactOwner = new
+                {
+                    artifactOwner.UserName,
+                    artifactOwner.UserEmail,
+                    artifactOwner.UserPhone
+                },
+                Estimate = artifact.Estimate
+            };
+
+
+
+            return Ok(result);
         }
         else
         {

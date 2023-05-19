@@ -128,7 +128,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts();
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status != "Deleted").ToList();
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status == "Active").ToList();
         category.CategoryArtifacts = categoryArtifacts;
 
         var result = new
@@ -139,7 +139,12 @@ public class CatalogueController : ControllerBase
             {
                 ArtifactName = a.ArtifactName,
                 ArtifactDescription = a.ArtifactDescription,
-                ArtifactOwner = a.ArtifactOwner.UserName,
+                ArtifactOwner = new
+                {
+                    UserName = a.ArtifactOwner.UserName,
+                    UserEmail = a.ArtifactOwner.UserEmail,
+                    UserPhone = a.ArtifactOwner.UserPhone
+                },
                 Estimate = a.Estimate,
                 ArtifactPicture = a.ArtifactPicture,
                 Status = a.Status
@@ -158,7 +163,8 @@ public class CatalogueController : ControllerBase
 
 
     //GET USER FRA USER DATABASE
-    [HttpGet("getuser/{id}"), DisableRequestSizeLimit]
+    [Authorize]
+    [HttpGet("getUser/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUser(int id)
     {
         _logger.LogInformation("CatalogueService - GetUser function hit");
@@ -181,9 +187,32 @@ public class CatalogueController : ControllerBase
             _logger.LogInformation($"MongId: {user.MongoId}");
             _logger.LogInformation($"UserName: {user.UserName}");
 
-            return Ok(user);
+            List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner.UserName == user.UserName).ToList();
+
+            user.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
+
+            var result = new
+            {
+                UserName = user.UserName,
+                UserEmail = user.UserEmail,
+                UserPhone = user.UserPhone,
+                UsersArtifacts = user.UsersArtifacts.Select(a => new
+                {
+                    ArtifactName = a.ArtifactName,
+                    ArtifactDescription = a.ArtifactDescription,
+                    CategoryCode = a.CategoryCode,
+                    Estimate = a.Estimate,
+                    ArtifactPicture = a.ArtifactPicture,
+                    Status = a.Status
+                }).ToList()
+            };
+            
+            return Ok(result);
         }
     }
+
+
+
 
 
     //POST

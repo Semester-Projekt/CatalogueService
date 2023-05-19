@@ -40,7 +40,7 @@ public class CatalogueController : ControllerBase
         _catalogueRepository = catalogueRepository;
 
     }
-    
+
     //VERSION_ENDEPUNKT
     [HttpGet("version")]
     public IActionResult GetVersion()
@@ -103,14 +103,15 @@ public class CatalogueController : ControllerBase
             return BadRequest("Category list is empty");
         }
 
-        var filteredCategories = categories.Select(c => new {
+        var filteredCategories = categories.Select(c => new
+        {
             CategoryName = c.CategoryName,
             CategoryDescription = c.CategoryDescription
         });
 
         return Ok(filteredCategories);
     }
-    
+
     [Authorize]
     [HttpGet("getCategoryByCode/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetCategoryByCode(string categoryCode)
@@ -134,7 +135,8 @@ public class CatalogueController : ControllerBase
         {
             CategoryName = category.CategoryName,
             CategoryDescription = category.CategoryDescription,
-            Artifacts = category.CategoryArtifacts.Select(a => new {
+            Artifacts = category.CategoryArtifacts.Select(a => new
+            {
                 ArtifactName = a.ArtifactName,
                 ArtifactDescription = a.ArtifactDescription,
                 ArtifactOwner = a.ArtifactOwner.UserName,
@@ -144,7 +146,7 @@ public class CatalogueController : ControllerBase
             }).ToList()
         };
 
-        
+
 
         return Ok(result);
     }
@@ -196,7 +198,7 @@ public class CatalogueController : ControllerBase
         var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode);
 
         var userResponse = await GetUser(userId); // Use await to get the User object
-        
+
         _logger.LogInformation("ArtifactOwnerID: " + userId);
 
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
@@ -272,10 +274,26 @@ public class CatalogueController : ControllerBase
         };
         _logger.LogInformation("new Category object made. CategoryCode: " + newCategory.CategoryCode);
 
-        
+        var allCategories = _catalogueRepository.GetAllCategories().Result;
+
+        var existingCategory = new Category();
+
+        for (int i = 0; i < allCategories.Count(); i++)
+        {
+            if (allCategories[i].CategoryCode == newCategory.CategoryCode && allCategories[i].CategoryName == newCategory.CategoryName)
+            {
+                existingCategory = allCategories[i];
+            }
+        }
+
         if (newCategory.CategoryCode == null)
         {
             return BadRequest("Invalid Code: " + newCategory.CategoryCode);
+        }
+        else if (existingCategory.CategoryCode != null)
+        {
+            _logger.LogInformation("Existing CategoryCode: " + existingCategory.CategoryCode);
+            return BadRequest("Category already exists: " + existingCategory.CategoryCode);
         }
         else
         {
@@ -283,9 +301,7 @@ public class CatalogueController : ControllerBase
         }
         _logger.LogInformation("new Category object added to _artifacts");
 
-
         return Ok(newCategory);
-
     }
 
 
@@ -327,7 +343,7 @@ public class CatalogueController : ControllerBase
         //henter alle artifacts med categoryCode til deletion:
         var categoryArtifacts = new List<Artifact>();
         List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result;
-        for (int i = 0; i < allArtifacts.Count; i++)
+        for (int i = 0; i < allArtifacts.Count(); i++)
         {
             if (allArtifacts[i].CategoryCode == categoryCode)
             {
@@ -336,7 +352,7 @@ public class CatalogueController : ControllerBase
         }
         _logger.LogInformation("This category contains this many artifacts: " + categoryArtifacts.Count());
         //sikrer at man ikke sletter en kategori der inderholder Artifacts
-        
+
 
 
         if (deletedCategory == null)
@@ -402,7 +418,7 @@ public class CatalogueController : ControllerBase
 
         var newUpdatedCategory = _catalogueRepository.GetCategoryByCode(categoryCode);
 
-        return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: { newUpdatedCategory.Result.CategoryDescription}");
+        return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
 }

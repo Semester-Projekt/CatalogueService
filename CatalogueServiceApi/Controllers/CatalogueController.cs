@@ -158,7 +158,8 @@ public class CatalogueController : ControllerBase
 
 
     //GET USER FRA USER DATABASE
-    [HttpGet("getuser/{id}"), DisableRequestSizeLimit]
+    [Authorize]
+    [HttpGet("getUser/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUser(int id)
     {
         _logger.LogInformation("CatalogueService - GetUser function hit");
@@ -181,7 +182,51 @@ public class CatalogueController : ControllerBase
             _logger.LogInformation($"MongId: {user.MongoId}");
             _logger.LogInformation($"UserName: {user.UserName}");
 
-            return Ok(user);
+            List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner.UserName == user.UserName).ToList();
+
+            user.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
+
+            var result = new
+            {
+                UserName = user.UserName,
+                UserEmail = user.UserEmail,
+                UserPhone = user.UserPhone,
+                UsersArtifacts = user.UsersArtifacts.Select(a => new
+                {
+                    ArtifactName = a.ArtifactName,
+                    ArtifactDescription = a.ArtifactDescription,
+                    CategoryCode = a.CategoryCode,
+                    Estimate = a.Estimate,
+                    ArtifactPicture = a.ArtifactPicture,
+                    Status = a.Status
+                }).ToList()
+            };
+            
+            return Ok(result);
+        }
+    }
+
+    //GET USERSARTIFACTS - KOBLER EN USER SAMMEN MED DERES ARTIFACTS
+    [Authorize]
+    [HttpGet("getUsersArtifacts/{userId}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> GetUsersArtifacts(int userId)
+    {
+        _logger.LogInformation("GetUsersArtifacts function hit");
+
+        using (HttpClient client = new HttpClient())
+        {
+            string userServiceUrl = "http://localhost:5030";
+            string getUserEndpoint = "/user/getUser/" + userId;
+
+
+
+
+
+
+
+
+
+            return Ok();
         }
     }
 

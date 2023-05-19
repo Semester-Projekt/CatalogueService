@@ -25,6 +25,8 @@ namespace Model
         public int UserPhone { get; set; }
 
 
+        public List<Artifact> UsersArtifacts { get; set; }
+
         public UserDTO(string userName, string userEmail, int userPhone)
         {
             //this.MongoId = mongoId;

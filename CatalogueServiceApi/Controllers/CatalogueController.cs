@@ -128,7 +128,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts();
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status != "Deleted").ToList();
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status == "Active").ToList();
         category.CategoryArtifacts = categoryArtifacts;
 
         var result = new
@@ -139,7 +139,12 @@ public class CatalogueController : ControllerBase
             {
                 ArtifactName = a.ArtifactName,
                 ArtifactDescription = a.ArtifactDescription,
-                ArtifactOwner = a.ArtifactOwner.UserName,
+                ArtifactOwner = new
+                {
+                    UserName = a.ArtifactOwner.UserName,
+                    UserEmail = a.ArtifactOwner.UserEmail,
+                    UserPhone = a.ArtifactOwner.UserPhone
+                },
                 Estimate = a.Estimate,
                 ArtifactPicture = a.ArtifactPicture,
                 Status = a.Status
@@ -206,29 +211,8 @@ public class CatalogueController : ControllerBase
         }
     }
 
-    //GET USERSARTIFACTS - KOBLER EN USER SAMMEN MED DERES ARTIFACTS
-    [Authorize]
-    [HttpGet("getUsersArtifacts/{userId}"), DisableRequestSizeLimit]
-    public async Task<IActionResult> GetUsersArtifacts(int userId)
-    {
-        _logger.LogInformation("GetUsersArtifacts function hit");
-
-        using (HttpClient client = new HttpClient())
-        {
-            string userServiceUrl = "http://localhost:5030";
-            string getUserEndpoint = "/user/getUser/" + userId;
 
 
-
-
-
-
-
-
-
-            return Ok();
-        }
-    }
 
 
     //POST

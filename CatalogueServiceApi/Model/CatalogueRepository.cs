@@ -94,7 +94,7 @@ namespace Model
 
 
         
-
+        
         //PUT
         public async Task UpdateArtifact(int id, Artifact? artifact)
         {

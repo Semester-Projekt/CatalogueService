@@ -57,6 +57,8 @@ namespace Model
 
 
 
+        
+
 
         //POST
         public void AddNewArtifact(Artifact? artifact)
@@ -72,28 +74,7 @@ namespace Model
 
 
 
-        //DELETE
-        public async Task DeleteArtifact(int id)
-        {
-            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
-            var update = Builders<Artifact>.Update
-                .Set(a => a.Status, "Deleted");
 
-            await _artifact.UpdateOneAsync(filter, update);
-            
-        }
-
-
-
-
-        public async Task DeleteCategory(string categoryCode)
-        {
-            var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
-            await _category.DeleteOneAsync(filter);
-        }
-
-
-        
         
         //PUT
         public async Task UpdateArtifact(int id, Artifact? artifact)
@@ -115,6 +96,28 @@ namespace Model
                 Set(a => a.CategoryDescription, category.CategoryDescription);
 
             await _category.UpdateOneAsync(filter, update);
+        }
+
+
+
+
+        
+
+        //DELETE
+        public async Task DeleteArtifact(int id)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update
+                .Set(a => a.Status, "Deleted");
+
+            await _artifact.UpdateOneAsync(filter, update);
+
+        }
+
+        public async Task DeleteCategory(string categoryCode)
+        {
+            var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
+            await _category.DeleteOneAsync(filter);
         }
 
 

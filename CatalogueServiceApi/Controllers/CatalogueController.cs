@@ -127,7 +127,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts();
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode).ToList();
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status != "Deleted").ToList();
         category.CategoryArtifacts = categoryArtifacts;
 
         var result = new
@@ -138,9 +138,13 @@ public class CatalogueController : ControllerBase
                 ArtifactName = a.ArtifactName,
                 ArtifactDescription = a.ArtifactDescription,
                 ArtifactOwner = a.ArtifactOwner.UserName,
-                Estimate = a.Estimate
+                Estimate = a.Estimate,
+                ArtifactPicture = a.ArtifactPicture,
+                Status = a.Status
             }).ToList()
         };
+
+        
 
         return Ok(result);
     }

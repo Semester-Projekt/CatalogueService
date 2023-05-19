@@ -12,7 +12,6 @@ namespace Model
     public class CatalogueRepository
     {
         private readonly IMongoCollection<Artifact> _artifact;
-        private readonly IMongoCollection<Artifact> _archivedArtifact;
         private readonly IMongoCollection<Category> _category;
 
 
@@ -22,7 +21,6 @@ namespace Model
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase("Catalogue");
             _artifact = database.GetCollection<Artifact>("Artifacts");
-            _archivedArtifact = database.GetCollection<Artifact>("ArchivedArtifacts");
             _category = database.GetCollection<Category>("Categories");
         }
         
@@ -50,7 +48,7 @@ namespace Model
             var filter = Builders<Category>.Filter.Eq("CategoryCode", code);
             return await _category.Find(filter).FirstOrDefaultAsync();
         }
-
+        
         public int GetNextArtifactID()
         {
             var lastArtifact = _artifact.AsQueryable().OrderByDescending(a => a.ArtifactID).FirstOrDefault();
@@ -66,14 +64,6 @@ namespace Model
             _artifact.InsertOne(artifact!);
         }
 
-        public void AddNewArchivedArtifact(Artifact? artifact)
-        {
-            _archivedArtifact.InsertOne(artifact!);
-        }
-
-        
-
-
         public void AddNewCategory(Category? category)
         {
             _category.InsertOne(category!);
@@ -83,14 +73,6 @@ namespace Model
 
 
         //DELETE
-        /*
-        public async Task DeleteArtifact(int id)
-        {
-            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
-            await _artifact.DeleteOneAsync(filter);
-        }
-        */
-
         public async Task DeleteArtifact(int id)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
@@ -98,6 +80,7 @@ namespace Model
                 .Set(a => a.Status, "Deleted");
 
             await _artifact.UpdateOneAsync(filter, update);
+            
         }
 
 

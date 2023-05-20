@@ -66,7 +66,7 @@ public class CatalogueController : ControllerBase
 
 
     //GET
-    [Authorize]
+    //[Authorize]
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetArtifactById(int id)
     {
@@ -152,8 +152,6 @@ public class CatalogueController : ControllerBase
                 Status = a.Status
             }).ToList()
         };
-
-
 
         return Ok(result);
     }

@@ -168,9 +168,9 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            string userServiceUrl = "http://localhost:5006";
+            string userServiceUrl = "http://localhost:80";
             string getUserEndpoint = "/user/getUser/" + id;
-
+            
             _logger.LogInformation(userServiceUrl + getUserEndpoint);
 
             HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint);

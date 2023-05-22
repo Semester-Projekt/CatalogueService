@@ -24,7 +24,6 @@ namespace Model
         [BsonElement("UserPhone")]
         public int UserPhone { get; set; }
 
-
         public List<Artifact> UsersArtifacts { get; set; }
 
         public UserDTO(string userName, string userEmail, int userPhone)

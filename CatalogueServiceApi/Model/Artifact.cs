@@ -30,10 +30,10 @@ namespace Model
         public UserDTO? ArtifactOwner { get; set; } // er dette rigtigt? skal evt laves om til User ArtifactOwner
 
         [BsonElement("Estimate")]
-        public int? Estimate { get; set; } = 0;
-
+        public int? Estimate { get; set; }
+        
         [BsonElement("ArtifactPicture")]
-        public string? ArtifactPicture { get; set; } = null; // hvordan uploader vi et billede?
+        public byte[]? ArtifactPicture { get; set; } = null; // hvordan uploader vi et billede?
 
         [BsonElement("Status")]
         public string? Status { get; set; } = "Pending"; // skal "Pending stå på metode?"

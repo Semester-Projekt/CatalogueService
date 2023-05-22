@@ -6,6 +6,12 @@ using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using MongoDB.Driver.Linq;
+using System.IO;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace Model
 {
@@ -98,10 +104,34 @@ namespace Model
             await _category.UpdateOneAsync(filter, update);
         }
 
+        public async Task<bool> UpdatePicture(int artifactID, IFormFile imageFile)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, artifactID);
+
+            var artifact = await _artifact.Find(filter).ToListAsync();
+
+            if (artifact == null || !artifact.Any())
+            {
+                // Handle scenario where the artifact is not found
+                return false;
+            }
+
+            var foundArtifact = artifact.First();
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await imageFile.CopyToAsync(memoryStream);
+                foundArtifact.ArtifactPicture = memoryStream.ToArray();
+            }
+
+            await _artifact.ReplaceOneAsync(filter, foundArtifact);
+            return true;
+        }
 
 
 
-        
+
+
 
         //DELETE
         public async Task DeleteArtifact(int id)

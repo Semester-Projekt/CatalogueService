@@ -135,7 +135,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts();
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status == "Active").ToList();
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode).ToList();
         category.CategoryArtifacts = categoryArtifacts;
 
         var result = new

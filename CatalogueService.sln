@@ -5,6 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogueServiceApi", "CatalogueServiceApi\CatalogueServiceApi.csproj", "{E3E0A3E4-D6EF-4421-87B5-0E8BD24CC6F8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4326003A-E604-4D1F-B064-60B8FF7B893E}"
+	ProjectSection(SolutionItems) = preProject
+		RabbitMQOptions.cs = RabbitMQOptions.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

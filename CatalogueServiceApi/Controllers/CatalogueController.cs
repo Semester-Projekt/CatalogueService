@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Model;
@@ -21,6 +20,8 @@ using MongoDB.Driver;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using RabbitMQ.Client;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Controllers;
 
@@ -39,7 +40,45 @@ public class CatalogueController : ControllerBase
         _config = config;
         _catalogueRepository = catalogueRepository;
 
+
     }
+
+    //RabbitMQ start
+    //  private object PublishNewArtifactMessage(Artifact newArtifact, object result)
+        private object PublishNewArtifactMessage(object result)
+    {
+        // Configure RabbitMQ connection settings
+        var factory = new ConnectionFactory()
+        {
+            HostName = "localhost", // Replace with your RabbitMQ server hostname
+            UserName = "guest",     // Replace with your RabbitMQ username
+            Password = "guest"      // Replace with your RabbitMQ password
+        };
+
+        using (var connection = factory.CreateConnection())
+        using (var channel = connection.CreateModel())
+        {
+            // Declare a queue
+            channel.QueueDeclare(queue: "new-artifact-queue",
+                                 durable: false,
+                                 exclusive: false,
+                                 autoDelete: false,
+                                 arguments: null);
+
+            // Convert newArtifact to a JSON string
+            var json = JsonSerializer.Serialize(result);
+
+            // Publish the message to the queue
+            var body = Encoding.UTF8.GetBytes(json);
+            channel.BasicPublish(exchange: "", routingKey: "new-artifact-queue", basicProperties: null, body: body);
+        }
+
+        // Return the result object
+        return result;
+    }
+    //RabbitMQ slut
+
+
 
     //VERSION_ENDEPUNKT
     [HttpGet("version")]
@@ -175,7 +214,6 @@ public class CatalogueController : ControllerBase
             {
                 return StatusCode((int)response.StatusCode, "Failed to retrieve UserId from UserService");
             }
-
             var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>();
 
             if (userResponse != null)
@@ -229,7 +267,7 @@ public class CatalogueController : ControllerBase
         var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode);
 
         var userResponse = await GetUserFromUserService(userId); // Use await to get the User object
-
+      
         _logger.LogInformation("ArtifactOwnerID: " + userId);
 
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
@@ -279,7 +317,9 @@ public class CatalogueController : ControllerBase
                 Estimate = artifact.Estimate
             };
 
-
+            // Publish the new artifact message to RabbitMQ
+            //PublishNewArtifactMessage(newArtifact, result);
+            PublishNewArtifactMessage(result);
 
             return Ok(result);
         }

@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Model;
@@ -106,7 +105,6 @@ public class CatalogueController : ControllerBase
 
 
     //GET
-    //[Authorize]
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetArtifactById(int id)
     {
@@ -121,7 +119,12 @@ public class CatalogueController : ControllerBase
         {
             artifact.ArtifactName,
             artifact.ArtifactDescription,
-            artifact.ArtifactOwner,
+            ArtifactOwner = new
+            {
+                UserName = artifact.ArtifactOwner.UserName,
+                UserEmail = artifact.ArtifactOwner.UserEmail,
+                UserPhone = artifact.ArtifactOwner.UserPhone
+            },
             artifact.ArtifactPicture
         };
 
@@ -130,7 +133,6 @@ public class CatalogueController : ControllerBase
         // evt noget filtrering på hvad andre brugere ser af data?
     }
 
-    [Authorize]
     [HttpGet("getAllCategories"), DisableRequestSizeLimit]
     public IActionResult GetAllCategories()
     {
@@ -154,7 +156,6 @@ public class CatalogueController : ControllerBase
         return Ok(filteredCategories);
     }
 
-    [Authorize]
     [HttpGet("getCategoryByCode/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetCategoryByCode(string categoryCode)
     {
@@ -170,7 +171,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts();
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status == "Active").ToList();
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode).ToList();
         category.CategoryArtifacts = categoryArtifacts;
 
         var result = new
@@ -196,52 +197,55 @@ public class CatalogueController : ControllerBase
         return Ok(result);
     }
 
-    //GET USER FRA USER DATABASE
-    [Authorize]
-    [HttpGet("getUser/{id}"), DisableRequestSizeLimit]
-    public async Task<ActionResult<UserDTO>> GetUser(int id)
+    [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
+    public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
         _logger.LogInformation("CatalogueService - GetUser function hit");
 
         using (HttpClient client = new HttpClient())
         {
-            string userServiceUrl = "http://localhost:5030";
+            string userServiceUrl = "http://user:80";
             string getUserEndpoint = "/user/getUser/" + id;
-
+            
             _logger.LogInformation(userServiceUrl + getUserEndpoint);
-
 
             HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint);
             if (!response.IsSuccessStatusCode)
             {
                 return StatusCode((int)response.StatusCode, "Failed to retrieve UserId from UserService");
             }
+            var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>();
 
-            var user = await response.Content.ReadFromJsonAsync<UserDTO>();
-            _logger.LogInformation($"MongId: {user.MongoId}");
-            _logger.LogInformation($"UserName: {user.UserName}");
-
-            List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner.UserName == user.UserName).ToList();
-
-            user.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
-
-            var result = new
+            if (userResponse != null)
             {
-                UserName = user.UserName,
-                UserEmail = user.UserEmail,
-                UserPhone = user.UserPhone,
-                UsersArtifacts = user.UsersArtifacts.Select(a => new
-                {
-                    ArtifactName = a.ArtifactName,
-                    ArtifactDescription = a.ArtifactDescription,
-                    CategoryCode = a.CategoryCode,
-                    Estimate = a.Estimate,
-                    ArtifactPicture = a.ArtifactPicture,
-                    Status = a.Status
-                }).ToList()
-            };
+                _logger.LogInformation($"MongId: {userResponse.MongoId}");
+                _logger.LogInformation($"UserName: {userResponse.UserName}");
 
-            return Ok(user);
+                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner.UserName == userResponse.UserName).ToList();
+
+                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
+                
+                var result = new
+                {
+                    UserName = userResponse.UserName,
+                    UserEmail = userResponse.UserEmail,
+                    UserPhone = userResponse.UserPhone,
+                    UsersArtifacts = userResponse.UsersArtifacts.Select(a => new
+                    {
+                        ArtifactName = a.ArtifactName,
+                        ArtifactDescription = a.ArtifactDescription,
+                        CategoryCode = a.CategoryCode,
+                        Estimate = a.Estimate,
+                        ArtifactPicture = a.ArtifactPicture,
+                        Status = a.Status
+                    }).ToList()
+                };
+                return Ok(userResponse);
+            }
+            else
+            {
+                return BadRequest("Failed to retrieve User object");
+            }
         }
     }
 
@@ -250,8 +254,9 @@ public class CatalogueController : ControllerBase
 
 
 
+
+
     //POST
-    [Authorize]
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)
     {
@@ -261,8 +266,8 @@ public class CatalogueController : ControllerBase
 
         var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode);
 
-        var userResponse = await GetUser(userId); // Use await to get the User object
-       
+        var userResponse = await GetUserFromUserService(userId); // Use await to get the User object
+      
         _logger.LogInformation("ArtifactOwnerID: " + userId);
 
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
@@ -324,7 +329,6 @@ public class CatalogueController : ControllerBase
         }
     }
 
-    [Authorize]
     [HttpPost("addNewCategory"), DisableRequestSizeLimit]
     public IActionResult AddNewCategory([FromBody] Category? category)
     {
@@ -374,7 +378,6 @@ public class CatalogueController : ControllerBase
 
 
     //PUT
-    [Authorize]
     [HttpPut("updateArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateArtifact(int id, [FromBody] Artifact artifact)
     {
@@ -395,7 +398,6 @@ public class CatalogueController : ControllerBase
         return Ok($"Artifact, {updatedArtifact.Result.ArtifactName}, has been updated");
     }
 
-    [Authorize]
     [HttpPut("updateCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateCategory(string categoryCode, [FromBody] Category? category)
     {
@@ -416,13 +418,67 @@ public class CatalogueController : ControllerBase
         return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
+    [HttpPut("updatePicture/{artifactID}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> UpdatePicture(int artifactID)
+    {
+        _logger.LogInformation("UpdatePicture function hit");
 
-    
+        var artifact = await _catalogueRepository.GetArtifactById(artifactID);
+
+        if (artifact == null)
+        {
+            return BadRequest("Artifact not found");
+        }
+
+        var formFile = Request.Form.Files.FirstOrDefault();
+
+        if (formFile == null || formFile.Length == 0)
+        {
+            return BadRequest("No image file uploaded");
+        }
+
+        byte[] imageData;
+
+        using (var memoryStream = new MemoryStream())
+        {
+            await formFile.CopyToAsync(memoryStream);
+            imageData = memoryStream.ToArray();
+        }
+
+        artifact.ArtifactPicture = imageData;
+
+        await _catalogueRepository.UpdatePicture(artifactID, formFile);
+
+        return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
+    }
+
+    [HttpGet("getPicture/{artifactID}")]
+    public async Task<IActionResult> GetPicture(int artifactID)
+    {
+        _logger.LogInformation("GetPicture function hit");
+
+        var artifact = await _catalogueRepository.GetArtifactById(artifactID);
+
+        if (artifact == null)
+        {
+            return BadRequest("Artifact not found");
+        }
+
+        if (artifact.ArtifactPicture == null)
+        {
+            return BadRequest("No picture available for the artifact");
+        }
+
+        return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
+    }
+
+
+
+
 
 
 
     //DELETE
-    [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<string> DeleteArtifact(int id)
     {
@@ -444,7 +500,6 @@ public class CatalogueController : ControllerBase
         return "Artifact status changed to 'Deleted'";
     }
 
-    [Authorize]
     [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> DeleteCategory(string categoryCode)
     {

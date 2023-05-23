@@ -94,7 +94,6 @@ public class CatalogueController : ControllerBase
         // evt noget filtrering på hvad andre brugere ser af data?
     }
 
-    [Authorize]
     [HttpGet("getAllCategories"), DisableRequestSizeLimit]
     public IActionResult GetAllCategories()
     {
@@ -118,7 +117,6 @@ public class CatalogueController : ControllerBase
         return Ok(filteredCategories);
     }
 
-    [Authorize]
     [HttpGet("getCategoryByCode/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetCategoryByCode(string categoryCode)
     {
@@ -160,7 +158,6 @@ public class CatalogueController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
@@ -222,7 +219,6 @@ public class CatalogueController : ControllerBase
 
 
     //POST
-    [Authorize]
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)
     {
@@ -293,8 +289,6 @@ public class CatalogueController : ControllerBase
         }
     }
 
-
-    [Authorize]
     [HttpPost("addNewCategory"), DisableRequestSizeLimit]
     public IActionResult AddNewCategory([FromBody] Category? category)
     {
@@ -344,7 +338,6 @@ public class CatalogueController : ControllerBase
 
 
     //PUT
-    [Authorize]
     [HttpPut("updateArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateArtifact(int id, [FromBody] Artifact artifact)
     {
@@ -365,7 +358,6 @@ public class CatalogueController : ControllerBase
         return Ok($"Artifact, {updatedArtifact.Result.ArtifactName}, has been updated");
     }
 
-    [Authorize]
     [HttpPut("updateCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateCategory(string categoryCode, [FromBody] Category? category)
     {
@@ -386,7 +378,6 @@ public class CatalogueController : ControllerBase
         return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
-    [Authorize]
     [HttpPut("updatePicture/{artifactID}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdatePicture(int artifactID)
     {
@@ -421,7 +412,6 @@ public class CatalogueController : ControllerBase
         return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
     }
 
-    [Authorize]
     [HttpGet("getPicture/{artifactID}")]
     public async Task<IActionResult> GetPicture(int artifactID)
     {
@@ -449,7 +439,6 @@ public class CatalogueController : ControllerBase
 
 
     //DELETE
-    [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<string> DeleteArtifact(int id)
     {
@@ -471,7 +460,6 @@ public class CatalogueController : ControllerBase
         return "Artifact status changed to 'Deleted'";
     }
 
-    [Authorize]
     [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> DeleteCategory(string categoryCode)
     {

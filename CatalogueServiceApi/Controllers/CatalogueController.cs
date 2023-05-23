@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using RabbitMQ.Client;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers;
 

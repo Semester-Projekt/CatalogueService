@@ -130,8 +130,6 @@ public class CatalogueController : ControllerBase
         };
 
         return Ok(filteredArtifact);
-
-        // evt noget filtrering på hvad andre brugere ser af data?
     }
 
     [HttpGet("getAllCategories"), DisableRequestSizeLimit]
@@ -198,6 +196,60 @@ public class CatalogueController : ControllerBase
         return Ok(result);
     }
 
+    // SAHARA STANDISERET GetCategory ENDEPUNKT
+    [HttpGet("categories/{categoryId}")]
+    public async Task<IActionResult> GetCategories(string categoryId)
+    {
+        _logger.LogInformation("SAHARA - getCategories function hit");
+
+        using (HttpClient client = new HttpClient())
+        {
+            string auctionServiceUrl = "http://auction:80";
+            // string auctionServiceUrl = "http://localhost:5001";
+            string getAuctionEndpoint = "/auction/getAllAuctions/";
+
+            _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
+
+            HttpResponseMessage response = await client.GetAsync(auctionServiceUrl + getAuctionEndpoint);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve Auctions from AuctionService");
+            }
+
+            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>();
+
+            var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName;
+            
+            var category = await _catalogueRepository.GetCategoryByCode(categoryId);
+
+            if (category == null)
+            {
+                return BadRequest("Invalid category does not exist: " + categoryId);
+            }
+
+            _logger.LogInformation("Selected category: " + category.CategoryName);
+
+            var artifacts = await _catalogueRepository.GetAllArtifacts();
+            var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList();
+            category.CategoryArtifacts = categoryArtifacts;
+            
+            var result = new
+            {
+                Artifacts = category.CategoryArtifacts.Select(a => new
+                {
+                    a.CategoryCode,
+                    CategoryName = categoryName,
+                    ItemDescription = a.ArtifactDescription,
+                    AuctionDate = auctionResponse.Where(b => b.ArtifactID == a.ArtifactID).Select(c => c.AuctionEndDate)
+                }).ToList()
+            };
+
+            return Ok(result);
+        }
+        
+        
+    }
+
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
@@ -205,7 +257,8 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            string userServiceUrl = "http://user:80";
+            // string userServiceUrl = "http://user:80";
+            string userServiceUrl = "http://localhost:5006";
             string getUserEndpoint = "/user/getUser/" + id;
             
             _logger.LogInformation(userServiceUrl + getUserEndpoint);

@@ -257,8 +257,8 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            // string userServiceUrl = "http://user:80";
-            string userServiceUrl = "http://localhost:5006";
+            // string userServiceUrl = "http://localhost:5006";
+            string userServiceUrl = "http://user:80";
             string getUserEndpoint = "/user/getUser/" + id;
             
             _logger.LogInformation(userServiceUrl + getUserEndpoint);

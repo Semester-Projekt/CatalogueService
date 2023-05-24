@@ -31,7 +31,7 @@ namespace Model
         }
         
         
-
+        
         //GET
         public async Task<List<Artifact>> GetAllArtifacts()
         {

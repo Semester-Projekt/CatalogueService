@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Model;
@@ -21,6 +20,9 @@ using MongoDB.Driver;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using RabbitMQ.Client;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers;
 
@@ -39,7 +41,45 @@ public class CatalogueController : ControllerBase
         _config = config;
         _catalogueRepository = catalogueRepository;
 
+
     }
+
+    //RabbitMQ start
+    //  private object PublishNewArtifactMessage(Artifact newArtifact, object result)
+        private object PublishNewArtifactMessage(object result)
+    {
+        // Configure RabbitMQ connection settings
+        var factory = new ConnectionFactory()
+        {
+            HostName = "localhost", // Replace with your RabbitMQ server hostname
+            UserName = "guest",     // Replace with your RabbitMQ username
+            Password = "guest"      // Replace with your RabbitMQ password
+        };
+
+        using (var connection = factory.CreateConnection())
+        using (var channel = connection.CreateModel())
+        {
+            // Declare a queue
+            channel.QueueDeclare(queue: "new-artifact-queue",
+                                 durable: false,
+                                 exclusive: false,
+                                 autoDelete: false,
+                                 arguments: null);
+
+            // Convert newArtifact to a JSON string
+            var json = JsonSerializer.Serialize(result);
+
+            // Publish the message to the queue
+            var body = Encoding.UTF8.GetBytes(json);
+            channel.BasicPublish(exchange: "", routingKey: "new-artifact-queue", basicProperties: null, body: body);
+        }
+
+        // Return the result object
+        return result;
+    }
+    //RabbitMQ slut
+
+
 
     //VERSION_ENDEPUNKT
     [HttpGet("version")]
@@ -90,11 +130,8 @@ public class CatalogueController : ControllerBase
         };
 
         return Ok(filteredArtifact);
-
-        // evt noget filtrering på hvad andre brugere ser af data?
     }
 
-    [Authorize]
     [HttpGet("getAllCategories"), DisableRequestSizeLimit]
     public IActionResult GetAllCategories()
     {
@@ -118,7 +155,6 @@ public class CatalogueController : ControllerBase
         return Ok(filteredCategories);
     }
 
-    [Authorize]
     [HttpGet("getCategoryByCode/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetCategoryByCode(string categoryCode)
     {
@@ -160,7 +196,60 @@ public class CatalogueController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
+    // SAHARA STANDISERET GetCategory ENDEPUNKT
+    [HttpGet("categories/{categoryId}")]
+    public async Task<IActionResult> GetCategories(string categoryId)
+    {
+        _logger.LogInformation("SAHARA - getCategories function hit");
+
+        using (HttpClient client = new HttpClient())
+        {
+            string auctionServiceUrl = "http://auction:80";
+            // string auctionServiceUrl = "http://localhost:5001";
+            string getAuctionEndpoint = "/auction/getAllAuctions/";
+
+            _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
+
+            HttpResponseMessage response = await client.GetAsync(auctionServiceUrl + getAuctionEndpoint);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve Auctions from AuctionService");
+            }
+
+            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>();
+
+            var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName;
+            
+            var category = await _catalogueRepository.GetCategoryByCode(categoryId);
+
+            if (category == null)
+            {
+                return BadRequest("Invalid category does not exist: " + categoryId);
+            }
+
+            _logger.LogInformation("Selected category: " + category.CategoryName);
+
+            var artifacts = await _catalogueRepository.GetAllArtifacts();
+            var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList();
+            category.CategoryArtifacts = categoryArtifacts;
+            
+            var result = new
+            {
+                Artifacts = category.CategoryArtifacts.Select(a => new
+                {
+                    a.CategoryCode,
+                    CategoryName = categoryName,
+                    ItemDescription = a.ArtifactDescription,
+                    AuctionDate = auctionResponse.Where(b => b.ArtifactID == a.ArtifactID).Select(c => c.AuctionEndDate)
+                }).ToList()
+            };
+
+            return Ok(result);
+        }
+        
+        
+    }
+
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
@@ -168,9 +257,10 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            string userServiceUrl = "http://localhost:5030";
+            // string userServiceUrl = "http://user:80";
+            string userServiceUrl = "http://localhost:5006";
             string getUserEndpoint = "/user/getUser/" + id;
-
+            
             _logger.LogInformation(userServiceUrl + getUserEndpoint);
 
             HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint);
@@ -178,7 +268,6 @@ public class CatalogueController : ControllerBase
             {
                 return StatusCode((int)response.StatusCode, "Failed to retrieve UserId from UserService");
             }
-
             var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>();
 
             if (userResponse != null)
@@ -222,7 +311,6 @@ public class CatalogueController : ControllerBase
 
 
     //POST
-    [Authorize]
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)
     {
@@ -233,7 +321,7 @@ public class CatalogueController : ControllerBase
         var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode);
 
         var userResponse = await GetUserFromUserService(userId); // Use await to get the User object
-
+      
         _logger.LogInformation("ArtifactOwnerID: " + userId);
 
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
@@ -283,7 +371,9 @@ public class CatalogueController : ControllerBase
                 Estimate = artifact.Estimate
             };
 
-
+            // Publish the new artifact message to RabbitMQ
+            //PublishNewArtifactMessage(newArtifact, result);
+            PublishNewArtifactMessage(result);
 
             return Ok(result);
         }
@@ -293,8 +383,6 @@ public class CatalogueController : ControllerBase
         }
     }
 
-
-    [Authorize]
     [HttpPost("addNewCategory"), DisableRequestSizeLimit]
     public IActionResult AddNewCategory([FromBody] Category? category)
     {
@@ -344,7 +432,6 @@ public class CatalogueController : ControllerBase
 
 
     //PUT
-    [Authorize]
     [HttpPut("updateArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateArtifact(int id, [FromBody] Artifact artifact)
     {
@@ -365,7 +452,6 @@ public class CatalogueController : ControllerBase
         return Ok($"Artifact, {updatedArtifact.Result.ArtifactName}, has been updated");
     }
 
-    [Authorize]
     [HttpPut("updateCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdateCategory(string categoryCode, [FromBody] Category? category)
     {
@@ -386,7 +472,6 @@ public class CatalogueController : ControllerBase
         return Ok($"CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
-    [Authorize]
     [HttpPut("updatePicture/{artifactID}"), DisableRequestSizeLimit]
     public async Task<IActionResult> UpdatePicture(int artifactID)
     {
@@ -421,7 +506,6 @@ public class CatalogueController : ControllerBase
         return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
     }
 
-    [Authorize]
     [HttpGet("getPicture/{artifactID}")]
     public async Task<IActionResult> GetPicture(int artifactID)
     {
@@ -449,7 +533,6 @@ public class CatalogueController : ControllerBase
 
 
     //DELETE
-    [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit]
     public async Task<string> DeleteArtifact(int id)
     {
@@ -471,7 +554,6 @@ public class CatalogueController : ControllerBase
         return "Artifact status changed to 'Deleted'";
     }
 
-    [Authorize]
     [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit]
     public async Task<IActionResult> DeleteCategory(string categoryCode)
     {

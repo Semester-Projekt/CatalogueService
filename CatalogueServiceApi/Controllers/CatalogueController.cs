@@ -221,8 +221,8 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            string auctionServiceUrl = "http://auction:80";
             // string auctionServiceUrl = "http://localhost:5001";
+            string auctionServiceUrl = "http://auction:80";
             string getAuctionEndpoint = "/auction/getAllAuctions/";
 
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);

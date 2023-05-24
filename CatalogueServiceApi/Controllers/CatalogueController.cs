@@ -106,6 +106,23 @@ public class CatalogueController : ControllerBase
 
 
     //GET
+    [HttpGet("getAllArtifacts"), DisableRequestSizeLimit]
+    public IActionResult GetAllArtifacts()
+    {
+        _logger.LogInformation("CatalogueController - getAllArtifacts function hit");
+
+        var artifacts = _catalogueRepository.GetAllArtifacts().Result;
+
+        _logger.LogInformation("CatalogueController - Total Artifacts: " + artifacts.Count());
+
+        if (artifacts == null)
+        {
+            return BadRequest("Artifact list is empty");
+        }
+
+        return Ok(artifacts);
+    }
+
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit]
     public async Task<IActionResult> GetArtifactById(int id)
     {

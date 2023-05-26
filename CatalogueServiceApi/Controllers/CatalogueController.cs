@@ -224,7 +224,7 @@ public class CatalogueController : ControllerBase
             //string auctionServiceUrl = "http://localhost:4000";
             //string auctionServiceUrl = "http://auction:80";
             string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL");
-            string getAuctionEndpoint = "/auction/getAllAuctions/";
+            string getAuctionEndpoint = "/auction/getAllAuctions";
 
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
 

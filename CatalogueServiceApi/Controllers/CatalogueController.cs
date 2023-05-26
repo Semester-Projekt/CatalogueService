@@ -40,6 +40,7 @@ public class CatalogueController : ControllerBase
         _logger = logger;
         _config = config;
         _catalogueRepository = catalogueRepository;
+        _logger.LogInformation($"Connecting to rabbitMQ on {_config["rabbithostname"]}");
 
 
     }
@@ -51,16 +52,17 @@ public class CatalogueController : ControllerBase
         // Configure RabbitMQ connection settings
         var factory = new ConnectionFactory()
         {
-            HostName = "localhost", // Replace with your RabbitMQ server hostname
-            UserName = "guest",     // Replace with your RabbitMQ username
-            Password = "guest"      // Replace with your RabbitMQ password
+            HostName = _config["rabbithostname"],  // Replace with your RabbitMQ container name or hostname
+     //       UserName = "guest",     // Replace with your RabbitMQ username
+     //       Password = "guest"      // Replace with your RabbitMQ password
         };
+
 
         using (var connection = factory.CreateConnection())
         using (var channel = connection.CreateModel())
         {
             // Declare a queue
-            channel.QueueDeclare(queue: "new-artifact-queue",
+            channel.QueueDeclare(queue: "test-artifact-queue",
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
@@ -71,7 +73,7 @@ public class CatalogueController : ControllerBase
 
             // Publish the message to the queue
             var body = Encoding.UTF8.GetBytes(json);
-            channel.BasicPublish(exchange: "", routingKey: "new-artifact-queue", basicProperties: null, body: body);
+            channel.BasicPublish(exchange: "", routingKey: "test-artifact-queue", basicProperties: null, body: body);
         }
 
         // Return the result object
@@ -221,8 +223,8 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient client = new HttpClient())
         {
-            // string auctionServiceUrl = "http://localhost:5001";
-            string auctionServiceUrl = "http://auction:80";
+             string auctionServiceUrl = "http://localhost:5001";
+          // string auctionServiceUrl = "http://auction:80";
             string getAuctionEndpoint = "/auction/getAllAuctions/";
 
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
@@ -326,7 +328,7 @@ public class CatalogueController : ControllerBase
 
 
 
-
+    //RabbitMQ på den her
     //POST
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)

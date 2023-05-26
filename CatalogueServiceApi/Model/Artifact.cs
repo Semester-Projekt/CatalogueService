@@ -10,7 +10,7 @@ namespace Model
 {
 	public class Artifact
 	{
-		[BsonId]
+		[BsonId] // mongo id for a specific Artifact
 		[BsonRepresentation(BsonType.ObjectId)]
 		public string? MongoId { get; set; }
 

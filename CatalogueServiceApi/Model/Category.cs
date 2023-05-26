@@ -10,7 +10,7 @@ namespace Model
 {
     public class Category
     {
-        [BsonId]
+        [BsonId] // mongo id for a specific Category
         [BsonRepresentation(BsonType.ObjectId)]
         public string? MongoId { get; set; }
 

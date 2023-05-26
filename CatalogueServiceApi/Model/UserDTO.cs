@@ -11,7 +11,9 @@ namespace Model
 {
     public class UserDTO
     {
-        [BsonId]
+        // This class works as a Data Transfer Object to receive data from the User class in UserService
+
+        [BsonId] // mongo id for a specific UserDTO
         [BsonRepresentation(BsonType.ObjectId)]
         public string? MongoId { get; set; }
 

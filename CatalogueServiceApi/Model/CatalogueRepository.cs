@@ -24,9 +24,11 @@ namespace Model
 
         public CatalogueRepository()
         {
-            string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING"); // mongo conn string miljøvariabel
-            var client = new MongoClient(connectionString);
-            var database = client.GetDatabase("Catalogue");
+            string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING"); // mongo conn string env variable - retreived from docker-compose.yml
+            var client = new MongoClient(connectionString); // creates the mongo client
+            var database = client.GetDatabase("Catalogue"); // retreives db from mongo
+
+            // retreives collections from mongo
             _artifacts = database.GetCollection<Artifact>("Artifacts");
             _categories = database.GetCollection<Category>("Categories");
         }
@@ -56,10 +58,10 @@ namespace Model
             return await _categories.Find(filter).FirstOrDefaultAsync();
         }
 
-        public int GetNextArtifactID()
+        public int GetNextArtifactID() // method for retreiving the highest+1 artifactId in the collection
         {
-            var lastArtifact = _artifacts.AsQueryable().OrderByDescending(a => a.ArtifactID).FirstOrDefault();
-            return (lastArtifact != null) ? lastArtifact.ArtifactID + 1 : 1;
+            var lastArtifact = _artifacts.AsQueryable().OrderByDescending(a => a.ArtifactID).FirstOrDefault(); // retreives allArtifactss and orders them by artifactId in descending order
+            return (lastArtifact != null) ? lastArtifact.ArtifactID + 1 : 1; // adds 1 to the current highest auctionId
         }
 
 

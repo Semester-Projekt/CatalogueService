@@ -1,3 +1,4 @@
+//usings
 using System.Text;
 using Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,58 +10,20 @@ using System.Text.Json;
 using Controllers;
 
 
-/*
-//RabbitMQ START
-//Create connection (LOCALHOST I DET HER TILFÆLDE)
-var factory = new ConnectionFactory { HostName = "localhost" };
-using var connection = factory.CreateConnection();
-using var channel = connection.CreateModel();
-
-//Vælg hvilken queue det skal sendes til i rabbitmq management (queue: "NAVN")
-channel.QueueDeclare(queue: "projekttest2",
-                     durable: false,
-                     exclusive: false,
-                     autoDelete: false,
-                     arguments: null);
-
-
-var newArtifact = new Artifact();
-
-//var message = JsonSerializer.SerializeToUtf8Bytes(newTaxaBooking); (newTaxaBooking skal laves om til den
-// metode vi vil have sendt ind i rabbitmq
-var message = JsonSerializer.SerializeToUtf8Bytes(newArtifact);
-//Selve beskeden den sender ind i rabbitmq management
-//var message = "projekttest1";
-//var body = Encoding.UTF8.GetBytes(message);
-
-//Routingkey = den queue lavet i QueueDeclare
-channel.BasicPublish(exchange: string.Empty,
-                     routingKey: "projekttest2",
-                     basicProperties: null,
-                     body: message);
-Console.WriteLine($" [x] Sent {message}");
-
-//Bekræfter at besked er sendt
-Console.WriteLine(" Press [enter] to exit.");
-Console.ReadLine();
-Console.WriteLine("Sendt til rabbitmq");
-//RabbitMQ SLUT
-
-*/
-
-//Indlæs NLog.config-konfigurationsfil
 var logger =
 NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 logger.Debug("init main");
 
-try // try/catch/finally fra m10.01 opgave b step 4
+try 
 {
 
     var builder = WebApplication.CreateBuilder(args);
 
-
+    // Retrieve secret and issuer from environment variables or use default values
     string mySecret = Environment.GetEnvironmentVariable("Secret") ?? "none";
     string myIssuer = Environment.GetEnvironmentVariable("Issuer") ?? "none";
+
+    // Add JWT bearer authentication with provided options
     builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -78,15 +41,15 @@ try // try/catch/finally fra m10.01 opgave b step 4
         };
     });
 
-    // Add services to the container.
+    // Add CatalogueRepository as a singleton service
     builder.Services.AddSingleton<CatalogueRepository>();
 
+    // Add controllers, Swagger, and API explorer services
     builder.Services.AddControllers();
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    //Brug NLog som logger fremadrettet
+    // Use NLog as the logger
     builder.Host.UseNLog();
 
     var app = builder.Build();

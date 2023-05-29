@@ -290,7 +290,7 @@ public class CatalogueController : ControllerBase
             string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL"); // retreives URL to UserService from docker-compose.yml file
             string getUserEndpoint = "/user/getUser/" + id;
             
-            _logger.LogInformation(userServiceUrl + getUserEndpoint);
+            _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
             HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint); // calls the UserService endpoint
             if (!response.IsSuccessStatusCode)

@@ -560,6 +560,27 @@ public class CatalogueController : ControllerBase
         return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
     }
 
+    [HttpPut("activateArtifact/{id}"), DisableRequestSizeLimit] // activateArtifact endpoint to change Status of Artifact to "Active" - used for putting artifact on auction
+    public async Task<string> ActivateArtifact(int id)
+    {
+        _logger.LogInformation("CatalogueService - activateArtifact function hit");
+
+        var activatedArtifact = await GetArtifactById(id); // retreives the specified Artifact
+
+        _logger.LogInformation("CatalogueService - ID for deletion: " + activatedArtifact);
+
+        if (activatedArtifact == null)
+        {
+            return "CatalogueService - ArtifactID is null";
+        }
+        else
+        {
+            await _catalogueRepository.ActivateArtifact(id); // Calls the PUT method in UserRepository.cs which updates the Status attribute of the Artifact to "Active"
+        }
+        
+        return "CatalogueService - Artifact status changed to 'Active'";
+    }
+
 
 
 

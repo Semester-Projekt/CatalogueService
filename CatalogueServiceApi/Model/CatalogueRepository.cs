@@ -131,6 +131,16 @@ namespace Model
             return true;
         }
 
+        public async Task ActivateArtifact(int id)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
+            var update = Builders<Artifact>.Update
+                .Set(a => a.Status, "Active");
+
+            await _artifacts.UpdateOneAsync(filter, update);
+
+        }
+
 
 
 

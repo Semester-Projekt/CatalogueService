@@ -135,12 +135,13 @@ public class CatalogueController : ControllerBase
 
         var artifact = await _catalogueRepository.GetArtifactById(id);
 
-        _logger.LogInformation("CatalogueService - Selected Artifact: " + artifact.ArtifactName);
-
         if (artifact == null)
         {
             return BadRequest($"Artifact with id {id} does NOT exist"); // checks validity of specified artifact
         }
+        
+        _logger.LogInformation("CatalogueService - Selected Artifact: " + artifact.ArtifactName);
+
 
 
         var filteredArtifact = new // filters the information returned by the function

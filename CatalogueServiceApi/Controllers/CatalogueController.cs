@@ -137,7 +137,7 @@ public class CatalogueController : ControllerBase
 
         if (artifact == null)
         {
-            return BadRequest($"Artifact with id {id} does NOT exist"); // checks validity of specified artifact
+            return BadRequest($"CatalogueService - Artifact with id {id} does NOT exist"); // checks validity of specified artifact
         }
         
         _logger.LogInformation("CatalogueService - Selected Artifact: " + artifact.ArtifactName);
@@ -276,8 +276,6 @@ public class CatalogueController : ControllerBase
 
             return Ok(result);
         }
-        
-        
     }
 
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]

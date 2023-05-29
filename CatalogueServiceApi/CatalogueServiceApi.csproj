@@ -4,8 +4,6 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-
-
     <Company>Daniels gruppe</Company>
     <Authors>
         Daniel B
@@ -13,18 +11,9 @@
         Mads K
         Mads-Emil J
     </Authors>
-
-    <AssemblyVersion>1.0.1.1</AssemblyVersion>
-    <FileVersion>1.0.1.1</FileVersion>
-
-    <InformationalVersion>1.0.0</InformationalVersion>
-    <Description>Workaing Main-udgave</Description>
-
-    <InformationalVersion>1.1.0</InformationalVersion>
-    <Description>Added Semantisk version-endepunkt</Description>
-
-    <InformationalVersion>1.2.0</InformationalVersion>
-    <Description>Added Mongo conn string miljøvariabel</Description>
+    <Copyright>2023 EAA</Copyright>
+    <InformationalVersion>2.0.0</InformationalVersion>
+    <Description>Added version endpoint</Description>
 
 
 

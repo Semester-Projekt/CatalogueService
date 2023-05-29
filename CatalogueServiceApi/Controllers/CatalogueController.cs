@@ -24,6 +24,7 @@ using System.IO;
 using RabbitMQ.Client;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace Controllers;
 
@@ -50,14 +51,14 @@ public class CatalogueController : ControllerBase
 
     //RabbitMQ start
     //  private object PublishNewArtifactMessage(Artifact newArtifact, object result)
-        private object PublishNewArtifactMessage(object result)
+    private object PublishNewArtifactMessage(object result)
     {
         // Configure RabbitMQ connection settings
         var factory = new ConnectionFactory()
         {
             HostName = _config["rabbithostname"],  // Replace with your RabbitMQ container name or hostname
-     //       UserName = "guest",     // Replace with your RabbitMQ username
-     //       Password = "guest"      // Replace with your RabbitMQ password
+                                                   //       UserName = "guest",     // Replace with your RabbitMQ username
+                                                   //       Password = "guest"      // Replace with your RabbitMQ password
         };
 
 
@@ -88,21 +89,29 @@ public class CatalogueController : ControllerBase
 
     // VERSION_ENDEPUNKT
     [HttpGet("version")]
-    public IActionResult GetVersion()
+    public async Task<Dictionary<string, string>> GetVersion()
     {
+        var properties = new Dictionary<string, string>();
         var assembly = typeof(Program).Assembly;
 
+        properties.Add("service", "User");
+        var ver = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion;
+        properties.Add("version", ver!);
 
-        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        var description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description;
-
-        var versionInfo = new
+        try
         {
-            InformationalVersion = informationalVersion,
-            Description = description
-        };
+            var hostName = System.Net.Dns.GetHostName();
+            var ips = await System.Net.Dns.GetHostAddressesAsync(hostName);
+            var ipa = ips.First().MapToIPv4().ToString();
+            properties.Add("hosted-at-address", ipa);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            properties.Add("hosted-at-address", "Could not resolve IP-address");
+        }
 
-        return Ok(versionInfo);
+        return properties;
     }
 
 
@@ -139,7 +148,7 @@ public class CatalogueController : ControllerBase
         {
             return BadRequest($"CatalogueService - Artifact with id {id} does NOT exist"); // checks validity of specified artifact
         }
-        
+
         _logger.LogInformation("CatalogueService - Selected Artifact: " + artifact.ArtifactName);
 
 
@@ -229,7 +238,7 @@ public class CatalogueController : ControllerBase
     public async Task<IActionResult> GetCategories(string categoryId)
     {
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
-        
+
         using (HttpClient client = new HttpClient())
         {
             //string auctionServiceUrl = "http://localhost:4000";
@@ -289,7 +298,7 @@ public class CatalogueController : ControllerBase
             //string userServiceUrl = "http://user:80";
             string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL"); // retreives URL to UserService from docker-compose.yml file
             string getUserEndpoint = "/user/getUser/" + id;
-            
+
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
             HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint); // calls the UserService endpoint
@@ -308,7 +317,7 @@ public class CatalogueController : ControllerBase
                 List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
 
                 userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList(); // adds the matching artifacts to the UsersArtifacts attribute on the specified UserDTO
-                
+
                 var result = new // creates a result with filters on both the UserDTO and the List<Artifact> attribute on the specified UserDTO
                 {
                     UserName = userResponse.UserName,
@@ -351,7 +360,7 @@ public class CatalogueController : ControllerBase
         var category = await _catalogueRepository.GetCategoryByCode(artifact.CategoryCode); // retreives any Category that mathces with the categoryCode provided in the request body
 
         var userResponse = await GetUserFromUserService(userId); // retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
-      
+
         _logger.LogInformation("CatalogueService - ArtifactOwnerID: " + userId);
 
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
@@ -462,7 +471,7 @@ public class CatalogueController : ControllerBase
 
 
 
-    
+
 
 
     //PUT
@@ -577,7 +586,7 @@ public class CatalogueController : ControllerBase
         {
             await _catalogueRepository.ActivateArtifact(id); // Calls the PUT method in UserRepository.cs which updates the Status attribute of the Artifact to "Active"
         }
-        
+
         return "CatalogueService - Artifact status changed to 'Active'";
     }
 
@@ -616,7 +625,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("CatalogueService - deleteCategory function hit");
 
         var deletedCategory = await GetCategoryByCode(categoryCode); // retreives the specified Category
-        
+
         var categoryArtifacts = new List<Artifact>(); // initializes a new list of Artifacts intended to filter Artifacts with matching CategoryCode
 
         List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(a => a.Status != "Deleted").ToList(); // retreives all Artifacts whose status does NOT equal "Deleted"
@@ -648,5 +657,5 @@ public class CatalogueController : ControllerBase
 
         return (IActionResult)Ok(GetAllCategories()).Value!;
     }
-    
+
 }

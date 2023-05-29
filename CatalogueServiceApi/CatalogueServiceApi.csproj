@@ -13,10 +13,9 @@
     </Authors>
     <Copyright>2023 EAA</Copyright>
     <InformationalVersion>2.0.0</InformationalVersion>
-    <Description>Added version endpoint</Description>
-
-
-
+    <Description>
+    Added version endpoint
+    </Description>
   </PropertyGroup>
 
 

@@ -94,7 +94,7 @@ public class CatalogueController : ControllerBase
         var properties = new Dictionary<string, string>();
         var assembly = typeof(Program).Assembly;
 
-        properties.Add("service", "User");
+        properties.Add("service", "Catalogue");
         var ver = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion;
         properties.Add("version", ver!);
 

@@ -4,8 +4,6 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-
-
     <Company>Daniels gruppe</Company>
     <Authors>
         Daniel B
@@ -13,21 +11,11 @@
         Mads K
         Mads-Emil J
     </Authors>
-
-    <AssemblyVersion>1.0.1.1</AssemblyVersion>
-    <FileVersion>1.0.1.1</FileVersion>
-
-    <InformationalVersion>1.0.0</InformationalVersion>
-    <Description>Workaing Main-udgave</Description>
-
-    <InformationalVersion>1.1.0</InformationalVersion>
-    <Description>Added Semantisk version-endepunkt</Description>
-
-    <InformationalVersion>1.2.0</InformationalVersion>
-    <Description>Added Mongo conn string miljøvariabel</Description>
-
-
-
+    <Copyright>2023 EAA</Copyright>
+    <InformationalVersion>2.0.0</InformationalVersion>
+    <Description>
+    Added version endpoint
+    </Description>
   </PropertyGroup>
 
 
@@ -44,11 +32,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.8" />
-    <PackageReference Include="MongoDB.Bson" Version="2.19.1" />
-    <PackageReference Include="MongoDB.Driver.Core" Version="2.19.1" />
-    <PackageReference Include="MongoDB.Driver" Version="2.19.1" />
-    <PackageReference Include="NLog" Version="5.1.4" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.2.3" />
+    <PackageReference Include="MongoDB.Bson" Version="2.19.2" />
+    <PackageReference Include="MongoDB.Driver.Core" Version="2.19.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.19.2" />
+    <PackageReference Include="NLog" Version="5.1.5" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.2.5" />
     <PackageReference Include="NLog.Targets.Loki" Version="1.4.6" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="7.0.5" />
@@ -57,8 +45,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.0.3" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.5" />
 

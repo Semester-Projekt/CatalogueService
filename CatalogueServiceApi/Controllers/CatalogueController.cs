@@ -254,6 +254,16 @@ public class CatalogueController : ControllerBase
         return Ok(result); // Returns the newly created result
     }
 
+
+
+
+
+
+
+
+
+
+
     // SAHARA STANDISERET GetCategory ENDEPUNKT
     [HttpGet("categories/{categoryId}")]
     public async Task<IActionResult> GetCategories(string categoryId)
@@ -272,7 +282,7 @@ public class CatalogueController : ControllerBase
             {
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
             }
-
+            
             var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
 
             var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Specifies a categoryName for the result
@@ -305,6 +315,53 @@ public class CatalogueController : ControllerBase
             return Ok(result);
         }
     }
+
+    [HttpGet("getauctions/")]
+    public async Task<IActionResult> GetAuctions()
+    {
+        _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
+
+        using (HttpClient _httpClient = new HttpClient())
+        {
+            string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!; // Retreives url to AuctionService from docker-compose.yml file
+            string getAuctionEndpoint = "/auction/getAllAuctions";
+
+            _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
+            
+            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
+            }
+
+            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
+
+            if (auctionResponse != null)
+            {
+                var allAuctions = auctionResponse.ToList();
+
+                return Ok(allAuctions);
+            }
+            else
+            {
+                return BadRequest("Failed to retreive allAuctions");
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)

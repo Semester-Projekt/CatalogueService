@@ -268,6 +268,15 @@ public class CatalogueController : ControllerBase
     [HttpGet("categories/{categoryId}")]
     public async Task<IActionResult> GetCategories(string categoryId)
     {
+        //()
+
+
+
+
+
+        //()
+
+
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
 
         using (HttpClient _httpClient = new HttpClient())

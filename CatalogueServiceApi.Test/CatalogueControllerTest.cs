@@ -114,7 +114,7 @@ public class CatalogueControllerTests
     public async Task VALID_TestSAHARAEndpoint()
     {
         // Arrange
-        // Create test data
+        // Create test objects for category, user, and artifact
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
         var category2 = new Category("T2", "TestCategoryName2", "TestCategoryDescription2");
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
@@ -122,27 +122,26 @@ public class CatalogueControllerTests
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
         var artifact2 = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "T2", user2, 2000);
 
-        // Create 2 lists for holding artifacts and categories
+        // Create collections of categories and artifacts
         var allCategories = new List<Category> { category1, category2 };
         var allArtifacts = new List<Artifact> { artifact1, artifact2 };
 
-
-        var mockRepo = new Mock<CatalogueRepository>(); // Setup mockRepository
-
-        // Setup mock behavior
-        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts); // Returns the created artifacts list
+        // Create a mock repository and set up its behavior
+        var mockRepo = new Mock<CatalogueRepository>();
+        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts);
         mockRepo.Setup(svc => svc.GetCategoryByCode(category1.CategoryCode!)).ReturnsAsync(category1);
-        mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories); // Returns the created categories list
+        mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories);
 
-        // Create the controller instance with the mock repository
-        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object);
-
+        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
 
         // Act
-
+        var result = await controller.GetCategory(category1.CategoryCode!); // Call the endpoint method to get a specific category
 
         // Assert
+        Assert.That(result, Is.TypeOf<OkObjectResult>()); // Verify that the result is of the expected type
     }
+
+
 
 
 
@@ -154,39 +153,34 @@ public class CatalogueControllerTests
     public async Task VALID_TestAddNewArtifact()
     {
         // Arrange
+        // Create test objects for category, user, and existing artifact
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
-        var category2 = new Category("T2", "TestCategoryName2", "TestCategoryDescription2");
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
-        var user2 = new UserDTO(2, "TestUserName2", "TestUserPassword2", "TestUserEmail2", 22222222, "TestUserAddress2");
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
-        var artifact2 = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "TE", user2, 2000);
 
+        // Create collections of categories and existing artifacts
         var allCategories = new List<Category> { category1 };
         var allArtifacts = new List<Artifact> { artifact1 };
 
-        var newArtifact = new Artifact(2, "NewArtifactName", "NewArtifactDescription", "TE", user1, 2000);
+        var newArtifact = new Artifact(2, "NewArtifactName", "NewArtifactDescription", "TE", user1, 2000); // Create a new artifact to be added
 
-        // Mocks the CatalogueRepository and defines the desired behavior
+        // Create a mock repository and set up its behavior
         var mockRepo = new Mock<CatalogueRepository>();
-
-        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts); // Returns the existing artifacts list
-        mockRepo.Setup(svc => svc.GetCategoryByCode(newArtifact.CategoryCode)).ReturnsAsync(category1); // Returns the existing artifacts list
+        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts);
+        mockRepo.Setup(svc => svc.GetCategoryByCode(newArtifact.CategoryCode!)).ReturnsAsync(category1);
         mockRepo.Setup(svc => svc.AddNewArtifact(It.IsAny<Artifact>())).Returns(Task.FromResult<Artifact?>(newArtifact));
 
-        // Initializes the controller with the necessary values from the CatalogueController constructor
-        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object);
-
+        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
 
         // Act
-        Console.WriteLine("test - user id: " + user1.UserId);
-        Console.WriteLine("test - newartifact owner user id: " + newArtifact.ArtifactOwner.UserId);
-        var result = await controller.AddNewArtifact(newArtifact, newArtifact.ArtifactOwner.UserId); // Passes any integer value for the userId parameter
-
+        var result = await controller.AddNewArtifact(newArtifact, newArtifact.ArtifactOwner!.UserId); // Call the endpoint method to add a new artifact
 
         // Assert
+        // Verify that the result is of the expected type and contains a new artifact
         Assert.That(result, Is.TypeOf<OkObjectResult>());
         Assert.That((result as OkObjectResult)?.Value, Is.TypeOf<Artifact>());
     }
+
 
 
 
@@ -198,6 +192,7 @@ public class CatalogueControllerTests
     public async Task VALID_TestDeleteCategory()
     {
         // Arrange
+        // Create test objects for categories, users, and artifacts
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
         var category2 = new Category("T2", "TestCategoryName2", "TestCategoryDescription2");
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
@@ -205,34 +200,32 @@ public class CatalogueControllerTests
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
         var artifact2 = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "TE", user2, 2000);
 
+        // Create collections of categories and artifacts
         var allCategories = new List<Category> { category1, category2 };
         var allArtifacts = new List<Artifact> { artifact1, artifact2 };
 
+        // Create a mock repository and set up its behavior
         var mockRepo = new Mock<CatalogueRepository>();
-
-        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts); // Returns the existing artifacts list
+        mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts);
         mockRepo.Setup(svc => svc.GetCategoryByCode(category1.CategoryCode!)).ReturnsAsync(category1);
-        mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories); // Returns the existing categories list
+        mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories);
 
-        // Initializes the controller with the necessary values from the CatalogueController constructor
-        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object);
-
+        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
 
         // Act
-        Console.WriteLine("test - cat2.catcode: " + category2.CategoryCode);
-        var result = await controller.DeleteCategory(category2.CategoryCode!);
-
+        var result = await controller.DeleteCategory(category2.CategoryCode!); // Call the endpoint method to delete a category
 
         // Assert
+        // Verify that the result is of the expected type and contains a list of categories
         Assert.That(result, Is.TypeOf<OkObjectResult>());
-        Assert.That(((result as OkObjectResult)?.Value as IEnumerable<Category>).ToList(), Is.TypeOf<List<Category>>());
-
+        Assert.That(((result as OkObjectResult)?.Value as IEnumerable<Category>)!.ToList(), Is.TypeOf<List<Category>>());
     }
 
     [Test]
     public async Task INVALID_TestDeleteCategory_CategoryContainsArtifacts()
     {
         // Arrange
+        // Create test objects for categories, users, and artifacts
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
         var category2 = new Category("T2", "TestCategoryName2", "TestCategoryDescription2");
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
@@ -240,27 +233,24 @@ public class CatalogueControllerTests
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
         var artifact2 = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "T2", user2, 2000);
 
+        // Create collections of categories and artifacts
         var allCategories = new List<Category> { category1, category2 };
         var allArtifacts = new List<Artifact> { artifact1, artifact2 };
 
+        // Create a mock repository and set up its behavior
         var mockRepo = new Mock<CatalogueRepository>();
-
         mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts);
         mockRepo.Setup(svc => svc.GetCategoryByCode(category1.CategoryCode!)).ReturnsAsync(category1);
         mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories);
 
-        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object);
-
-
+        var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
 
         // Act
-        Console.WriteLine("test - cat2.catcode: " + category2.CategoryCode);
-        var result = await controller.DeleteCategory(category2.CategoryCode!);
-
+        var result = await controller.DeleteCategory(category2.CategoryCode!); // Call the endpoint method to delete a category that contains artifacts
 
         // Assert
+        // Verify that the result is of the expected type and contains a validation error message
         Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
         Assert.That((result as BadRequestObjectResult)?.Value, Is.TypeOf<string>());
-    }
-
+    } 
 }

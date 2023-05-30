@@ -30,7 +30,7 @@ namespace Model
         public UserDTO? ArtifactOwner { get; set; }
 
         [BsonElement("Estimate")]
-        public int? Estimate { get; set; }
+        public int Estimate { get; set; }
 
         [BsonElement("ArtifactPicture")]
         public byte[]? ArtifactPicture { get; set; } = null; // Represents the image data of the artifact as a nullable byte array.
@@ -40,12 +40,13 @@ namespace Model
         public string? Status { get; set; } = "Pending";
 
 
-        public Artifact(int artifactID, string artifactName, string artifactDescription, int estimate, string categoryCode)
+        public Artifact(int artifactID, string artifactName, string artifactDescription, string categoryCode, UserDTO artifactOwner, int estimate)
         {
             this.ArtifactID = artifactID;
             this.ArtifactName = artifactName;
             this.ArtifactDescription = artifactDescription;
             this.CategoryCode = categoryCode;
+            this.ArtifactOwner = artifactOwner;
             this.Estimate = estimate;
         }
 

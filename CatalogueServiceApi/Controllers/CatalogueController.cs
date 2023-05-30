@@ -264,19 +264,89 @@ public class CatalogueController : ControllerBase
 
 
 
+
+
+
+
+    [HttpGet("getauctions/")] // skal måske bare return auctionDate
+    public async Task<ActionResult<List<AuctionDTO>>> GetAuctions()
+    {
+        _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
+
+        using (HttpClient _httpClient = new HttpClient())
+        {
+            string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!; // Retreives url to AuctionService from docker-compose.yml file
+            string getAuctionEndpoint = "/auction/getAllAuctions";
+            
+            _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
+
+            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
+            }
+
+            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
+
+            if (auctionResponse != null)
+            {
+                var allAuctions = auctionResponse.ToList();
+
+                return Ok(auctionResponse);
+            }
+            else
+            {
+                return BadRequest("Failed to retreive allAuctions");
+            }
+        }
+    }
+
     // SAHARA STANDISERET GetCategory ENDEPUNKT
     [HttpGet("categories/{categoryId}")]
-    public async Task<IActionResult> GetCategories(string categoryId)
+    public async Task<IActionResult> GetCategory(string categoryId)
     {
         //()
+        _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
 
+        var auctionResponse = await GetAuctions();
 
+        ObjectResult objectResult = (ObjectResult)auctionResponse.Result;
 
+        List<AuctionDTO> auctions = (List<AuctionDTO>)objectResult.Value;
+
+        var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Specifies a categoryName for the result
+
+        var category = await _catalogueRepository.GetCategoryByCode(categoryId); // Specifies a Category for the result
+
+        if (category == null)
+        {
+            return BadRequest("CatalogueService - Invalid, Category does not exist: " + categoryId);
+        }
+
+        _logger.LogInformation("CatalogueService - Selected category: " + category.CategoryName);
+
+        var artifacts = await _catalogueRepository.GetAllArtifacts(); // Retreives all Artifacts from _artifacts
+
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList(); // Creates a new list of Artifacts that all have the specified categoryId
+        category.CategoryArtifacts = categoryArtifacts; // Populates the CategoryArtifacts attribute on Category.cs with the Artifacts that match the specified categoryId
+
+        var result = new // Creates a new result, to be returned with filters for both AuctionDTO and Artifact
+        {
+            Artifacts = category.CategoryArtifacts.Select(a => new
+            {
+                a.CategoryCode,
+                CategoryName = categoryName,
+                ItemDescription = a.ArtifactDescription,
+                AuctionDate = auctions.Where(b => b.ArtifactID == a.ArtifactID).Select(c => c.AuctionEndDate)
+            }).ToList()
+        };
+
+        return Ok(result);
 
 
         //()
 
-
+        /*
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
 
         using (HttpClient _httpClient = new HttpClient())
@@ -322,41 +392,18 @@ public class CatalogueController : ControllerBase
             };
 
             return Ok(result);
+
         }
+        */
     }
 
-    [HttpGet("getauctions/")]
-    public async Task<IActionResult> GetAuctions()
-    {
-        _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
 
-        using (HttpClient _httpClient = new HttpClient())
-        {
-            string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!; // Retreives url to AuctionService from docker-compose.yml file
-            string getAuctionEndpoint = "/auction/getAllAuctions";
 
-            _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
-            
-            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
-            if (!response.IsSuccessStatusCode)
-            {
-                return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
-            }
 
-            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
 
-            if (auctionResponse != null)
-            {
-                var allAuctions = auctionResponse.ToList();
 
-                return Ok(allAuctions);
-            }
-            else
-            {
-                return BadRequest("Failed to retreive allAuctions");
-            }
-        }
-    }
+
+
 
 
 
@@ -400,22 +447,7 @@ public class CatalogueController : ControllerBase
                 List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
 
                 userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList(); // Adds the matching artifacts to the UsersArtifacts attribute on the specified UserDTO
-
-                var result = new // Creates a result with filters on both the UserDTO and the List<Artifact> attribute on the specified UserDTO
-                {
-                    UserName = userResponse.UserName,
-                    UserEmail = userResponse.UserEmail,
-                    UserPhone = userResponse.UserPhone,
-                    UsersArtifacts = userResponse.UsersArtifacts.Select(a => new
-                    {
-                        ArtifactName = a.ArtifactName,
-                        ArtifactDescription = a.ArtifactDescription,
-                        CategoryCode = a.CategoryCode,
-                        Estimate = a.Estimate,
-                        ArtifactPicture = a.ArtifactPicture,
-                        Status = a.Status
-                    }).ToList()
-                };
+                
                 return Ok(userResponse);
             }
             else

@@ -126,7 +126,7 @@ public class CatalogueControllerTests
         var allCategories = new List<Category> { category1, category2 };
         var allArtifacts = new List<Artifact> { artifact1, artifact2 };
 
-
+        
         var mockRepo = new Mock<CatalogueRepository>(); // Setup mockRepository
 
         // Setup mock behavior
@@ -139,10 +139,14 @@ public class CatalogueControllerTests
 
 
         // Act
+        var result = await controller.GetCategory(category1.CategoryCode!);
 
 
         // Assert
+        // Check the type of the result
+        Assert.That(result, Is.TypeOf<OkObjectResult>()); // Checks whether the result is an instance of the OkObjectResult class.
     }
+
 
 
 
@@ -170,7 +174,7 @@ public class CatalogueControllerTests
         var mockRepo = new Mock<CatalogueRepository>();
 
         mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts); // Returns the existing artifacts list
-        mockRepo.Setup(svc => svc.GetCategoryByCode(newArtifact.CategoryCode)).ReturnsAsync(category1); // Returns the existing artifacts list
+        mockRepo.Setup(svc => svc.GetCategoryByCode(newArtifact.CategoryCode!)).ReturnsAsync(category1); // Returns the existing artifacts list
         mockRepo.Setup(svc => svc.AddNewArtifact(It.IsAny<Artifact>())).Returns(Task.FromResult<Artifact?>(newArtifact));
 
         // Initializes the controller with the necessary values from the CatalogueController constructor
@@ -179,7 +183,7 @@ public class CatalogueControllerTests
 
         // Act
         Console.WriteLine("test - user id: " + user1.UserId);
-        Console.WriteLine("test - newartifact owner user id: " + newArtifact.ArtifactOwner.UserId);
+        Console.WriteLine("test - newartifact owner user id: " + newArtifact.ArtifactOwner!.UserId);
         var result = await controller.AddNewArtifact(newArtifact, newArtifact.ArtifactOwner.UserId); // Passes any integer value for the userId parameter
 
 
@@ -225,7 +229,7 @@ public class CatalogueControllerTests
 
         // Assert
         Assert.That(result, Is.TypeOf<OkObjectResult>());
-        Assert.That(((result as OkObjectResult)?.Value as IEnumerable<Category>).ToList(), Is.TypeOf<List<Category>>());
+        Assert.That(((result as OkObjectResult)?.Value as IEnumerable<Category>)!.ToList(), Is.TypeOf<List<Category>>());
 
     }
 

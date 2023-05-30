@@ -13,7 +13,7 @@ namespace Model
     {
         // This class works as a Data Transfer Object to receive data from the User class in UserService
 
-        [BsonId] // mongo id for a specific UserDTO
+        [BsonId] // Mongo id for a specific UserDTO
         [BsonRepresentation(BsonType.ObjectId)]
         public string? MongoId { get; set; }
 
@@ -26,11 +26,11 @@ namespace Model
         [BsonElement("UserPhone")]
         public int UserPhone { get; set; }
 
-        public List<Artifact> UsersArtifacts { get; set; }
+        public List<Artifact>? UsersArtifacts { get; set; }
 
-        public UserDTO(string userName, string userEmail, int userPhone)
+        public UserDTO(string mongoId, string userName, string userEmail, int userPhone)
         {
-            //this.MongoId = mongoId;
+            this.MongoId = mongoId;
             this.UserName = userName;
             this.UserEmail = userEmail;
             this.UserPhone = userPhone;

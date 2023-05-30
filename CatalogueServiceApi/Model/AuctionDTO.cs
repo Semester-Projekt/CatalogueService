@@ -13,7 +13,7 @@ namespace Model
 	{
         // This class works as a Data Transfer Object to receive data from the Auction class in AuctionService
 
-        [BsonId] // mongo id for a specific AuctionDTO
+        [BsonId] // Mongo id for a specific AuctionDTO
         [BsonRepresentation(BsonType.ObjectId)]
         public string? MongoId { get; set; }
 

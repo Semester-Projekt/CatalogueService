@@ -10,12 +10,12 @@ namespace Model
 {
 	public class Artifact
 	{
-		[BsonId] // mongo id for a specific Artifact
+		[BsonId] // Mongo id for a specific Artifact
 		[BsonRepresentation(BsonType.ObjectId)]
 		public string? MongoId { get; set; }
 
         [BsonElement("ArtifactID")]
-        public int ArtifactID { get; set; } //skal måske være en 'int'?
+        public int ArtifactID { get; set; }
 
         [BsonElement("ArtifactName")]
         public string? ArtifactName { get; set; }
@@ -25,18 +25,19 @@ namespace Model
 
         [BsonElement("CategoryCode")]
         public string? CategoryCode { get; set; }
-
+        
         [BsonElement("ArtifactOwner")]
-        public UserDTO? ArtifactOwner { get; set; } // er dette rigtigt? skal evt laves om til User ArtifactOwner
+        public UserDTO? ArtifactOwner { get; set; }
 
         [BsonElement("Estimate")]
         public int? Estimate { get; set; }
-        
+
         [BsonElement("ArtifactPicture")]
-        public byte[]? ArtifactPicture { get; set; } = null; // hvordan uploader vi et billede?
+        public byte[]? ArtifactPicture { get; set; } = null; // Represents the image data of the artifact as a nullable byte array.
+
 
         [BsonElement("Status")]
-        public string? Status { get; set; } = "Pending"; // skal "Pending stå på metode?"
+        public string? Status { get; set; } = "Pending";
 
 
         public Artifact(int artifactID, string artifactName, string artifactDescription, int estimate, string categoryCode)

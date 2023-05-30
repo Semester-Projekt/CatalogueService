@@ -21,10 +21,12 @@ using MongoDB.Driver;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using System.Net.Http;
 using RabbitMQ.Client;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+
 
 namespace Controllers;
 
@@ -37,16 +39,20 @@ public class CatalogueController : ControllerBase
     private readonly IConfiguration _config;
     private CatalogueRepository _catalogueRepository;
 
-
     public CatalogueController(ILogger<CatalogueController> logger, IConfiguration config, CatalogueRepository catalogueRepository)
     {
         // Initializes the controllers constructor with the 3 specified private objects
         _logger = logger;
         _config = config;
         _catalogueRepository = catalogueRepository;
+
         _logger.LogInformation($"Connecting to rabbitMQ on {_config["rabbithostname"]}");
 
-
+        // Logger host information
+        var hostName = System.Net.Dns.GetHostName();
+        var ips = System.Net.Dns.GetHostAddresses(hostName);
+        var _ipaddr = ips.First().MapToIPv4().ToString();
+        _logger.LogInformation(1, $"UserService - Auth service responding from {_ipaddr}");
     }
 
     //RabbitMQ start
@@ -133,7 +139,7 @@ public class CatalogueController : ControllerBase
 
 
 
-    
+
     //GET
     [HttpGet("getAllArtifacts"), DisableRequestSizeLimit] // GetAllArtifacts endpoint to retreive all Artifacts in the collection
     public IActionResult GetAllArtifacts()
@@ -254,14 +260,14 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
 
-        using (HttpClient client = new HttpClient())
+        using (HttpClient _httpClient = new HttpClient())
         {
             string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!; // Retreives url to AuctionService from docker-compose.yml file
             string getAuctionEndpoint = "/auction/getAllAuctions";
 
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
 
-            HttpResponseMessage response = await client.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
+            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
             if (!response.IsSuccessStatusCode)
             {
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
@@ -305,14 +311,14 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - GetUser function hit");
 
-        using (HttpClient client = new HttpClient())
+        using (HttpClient _httpClient = new HttpClient())
         {
             string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!; // Retreives URL to UserService from docker-compose.yml file
             string getUserEndpoint = "/user/getUser/" + id;
 
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
-            HttpResponseMessage response = await client.GetAsync(userServiceUrl + getUserEndpoint); // Calls the UserService endpoint
+            HttpResponseMessage response = await _httpClient.GetAsync(userServiceUrl + getUserEndpoint); // Calls the UserService endpoint
             if (!response.IsSuccessStatusCode)
             {
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve UserId from UserService");
@@ -322,8 +328,8 @@ public class CatalogueController : ControllerBase
 
             if (userResponse != null) // Validates the result from the UserService endpoint call
             {
-                _logger.LogInformation($"CatalogueService - MongId: {userResponse.MongoId}");
-                _logger.LogInformation($"CatalogueService - UserName: {userResponse.UserName}");
+                _logger.LogInformation($"CatalogueService.GetUser - MongId: {userResponse.MongoId}");
+                _logger.LogInformation($"CatalogueService.GetUser - UserName: {userResponse.UserName}");
 
                 List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
 
@@ -362,18 +368,73 @@ public class CatalogueController : ControllerBase
     //RabbitMQ på den her
     //POST
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit] // Endpoint for adding a new Artifact to _artifacts
-    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int userId)
+    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int? userId)
     {
+        //()
         _logger.LogInformation("CatalogueService - addNewArtifact function hit");
 
-        int latestID = _catalogueRepository.GetNextArtifactID(); // Gets latest ID in _artifacts + 1
+        // Retreive the latest artifactID by retreiving all artifacts and then using .Max to see the highest in the list
+        var allArtifacts = await _catalogueRepository.GetAllArtifacts();
+        int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
+
+        var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Retreives any Category that mathces with the categoryCode provided in the request body
+
+        var userResponse = await GetUserFromUserService((int)userId); // Retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
+
+        ObjectResult objectResult = (ObjectResult)userResponse.Result;
+
+        UserDTO? artifactOwner = (UserDTO?)objectResult.Value;
+
+
+        _logger.LogInformation("CatalogueService - artifactOwner.UserName: " + artifactOwner.UserName);
+
+        if (category == null)
+        {
+            return BadRequest("CatalogueService - Invalid Category code: " + artifact.CategoryCode);
+        }
+
+        var newArtifact = new Artifact // Creates new Artifact object
+        {
+            ArtifactID = (int)latestID,
+            ArtifactName = artifact!.ArtifactName,
+            ArtifactDescription = artifact.ArtifactDescription,
+            CategoryCode = artifact.CategoryCode,
+            ArtifactOwner = artifactOwner, // Sets the ArtifactOwner of the new Artifact object as the retreived UserDTO
+            Estimate = artifact.Estimate,
+        };
+
+        if (newArtifact.ArtifactID == 0)
+        {
+            return BadRequest("CatalogueService - Invalid ID: " + newArtifact.ArtifactID);
+        }
+        else
+        {
+            await _catalogueRepository.AddNewArtifact(newArtifact); // Adds the new Artifact to _artifacts
+        }
+        _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
+
+
+        return Ok(newArtifact); // Returns the created result object
+
+
+
+
+        //()
+
+
+
+        /*
+        _logger.LogInformation("CatalogueService - addNewArtifact function hit");
+
+        // Retreive the latest artifactID by retreiving all artifacts and then using .Max to see the highest in the list
+        var allArtifacts = await _catalogueRepository.GetAllArtifacts();
+        int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
 
         var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Retreives any Category that mathces with the categoryCode provided in the request body
 
         var userResponse = await GetUserFromUserService(userId); // Retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
 
-        _logger.LogInformation("CatalogueService - ArtifactOwnerID: " + userId);
-
+        
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
         {
             _logger.LogInformation("CatalogueService - ArtifactOwnerMongo: " + artifactOwner.MongoId);
@@ -386,7 +447,7 @@ public class CatalogueController : ControllerBase
 
             var newArtifact = new Artifact // Creates new Artifact object
             {
-                ArtifactID = latestID,
+                ArtifactID = (int)latestID,
                 ArtifactName = artifact!.ArtifactName,
                 ArtifactDescription = artifact.ArtifactDescription,
                 CategoryCode = artifact.CategoryCode,
@@ -402,7 +463,7 @@ public class CatalogueController : ControllerBase
             }
             else
             {
-                _catalogueRepository.AddNewArtifact(newArtifact); // Adds the new Artifact to _artifacts
+                await _catalogueRepository.AddNewArtifact(newArtifact); // Adds the new Artifact to _artifacts
             }
             _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
 
@@ -431,6 +492,7 @@ public class CatalogueController : ControllerBase
         {
             return BadRequest("CatalogueService - Failed to retrieve User object");
         }
+        */
     }
 
     [HttpPost("addNewCategory"), DisableRequestSizeLimit] // Endpoint for adding a new Category to _categories
@@ -459,7 +521,7 @@ public class CatalogueController : ControllerBase
                 existingCategory = allCategories[i];
             }
         }
-        
+
         if (newCategory.CategoryCode == null)
         {
             return BadRequest("CatalogueService - Invalid Code: " + newCategory.CategoryCode);

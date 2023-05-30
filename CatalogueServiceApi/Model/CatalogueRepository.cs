@@ -11,6 +11,7 @@ using MongoDB.Driver.Linq;
 using System.IO;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.AspNetCore.Components.Web.Virtualization;
 
 
 namespace Model
@@ -36,47 +37,41 @@ namespace Model
 
 
         // GET
-        public async Task<List<Artifact>> GetAllArtifacts()
+        public virtual async Task<List<Artifact>> GetAllArtifacts()
         {
             return await _artifacts.Aggregate().ToListAsync();
         }
 
-        public async Task<Artifact> GetArtifactById(int id)
+        public virtual async Task<Artifact> GetArtifactById(int id)
         {
             // Create a filter to find the artifact with the specified ID
             var filter = Builders<Artifact>.Filter.Eq("ArtifactID", id);
             return await _artifacts.Find(filter).FirstOrDefaultAsync();
         }
 
-        public async Task<List<Category>> GetAllCategories()
+        public virtual async Task<List<Category>> GetAllCategories()
         {
             return await _categories.Aggregate().ToListAsync();
         }
 
-        public async Task<Category> GetCategoryByCode(string code)
+        public virtual async Task<Category> GetCategoryByCode(string code)
         {
             var filter = Builders<Category>.Filter.Eq("CategoryCode", code);
             return await _categories.Find(filter).FirstOrDefaultAsync();
         }
 
-        public int GetNextArtifactID() // method for retreiving the highest+1 artifactId in the collection
-        {
-            var lastArtifact = _artifacts.AsQueryable().OrderByDescending(a => a.ArtifactID).FirstOrDefault(); // retreives allArtifactss and orders them by artifactId in descending order
-            return (lastArtifact != null) ? lastArtifact.ArtifactID + 1 : 1; // adds 1 to the current highest auctionId
-        }
-
-
 
 
 
         
+
         // POST
-        public void AddNewArtifact(Artifact? artifact)
+        public virtual async Task AddNewArtifact(Artifact? artifact)
         {
-            _artifacts.InsertOne(artifact!);
+            await Task.Run(() => _artifacts.InsertOne(artifact!));
         }
 
-        public void AddNewCategory(Category? category)
+        public virtual void AddNewCategory(Category? category)
         {
             _categories.InsertOne(category!);
         }
@@ -87,7 +82,7 @@ namespace Model
 
 
         // PUT
-        public async Task UpdateArtifact(int id, Artifact? artifact)
+        public virtual async Task UpdateArtifact(int id, Artifact? artifact)
         {
             // Create a filter to find the artifact with the specified ID
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
@@ -103,7 +98,7 @@ namespace Model
             await _artifacts.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateCategory(string categoryCode, Category category)
+        public virtual async Task UpdateCategory(string categoryCode, Category category)
         {
             // Create a filter to find the category with the specified category code
             var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
@@ -116,7 +111,7 @@ namespace Model
             await _categories.UpdateOneAsync(filter, update);
         }
 
-        public async Task<bool> UpdatePicture(int artifactID, IFormFile imageFile)
+        public virtual async Task<bool> UpdatePicture(int artifactID, IFormFile imageFile)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, artifactID);
 
@@ -147,7 +142,7 @@ namespace Model
             return true;
         }
         
-        public async Task ActivateArtifact(int id)
+        public virtual async Task ActivateArtifact(int id)
         {
             // Create a filter to find the artifact with the specified ID
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
@@ -166,7 +161,7 @@ namespace Model
 
         
         // DELETE
-        public async Task DeleteArtifact(int id)
+        public virtual async Task DeleteArtifact(int id)
         {
             var filter = Builders<Artifact>.Filter.Eq(a => a.ArtifactID, id);
             var update = Builders<Artifact>.Update
@@ -176,7 +171,7 @@ namespace Model
 
         }
 
-        public async Task DeleteCategory(string categoryCode)
+        public virtual async Task DeleteCategory(string categoryCode)
         {
             var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
             await _categories.DeleteOneAsync(filter);

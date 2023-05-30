@@ -146,16 +146,16 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - getAllArtifacts function hit");
 
-        var artifacts = _catalogueRepository.GetAllArtifacts().Result; // Calls the method from the UserRepository
+        var artifacts = _catalogueRepository.GetAllArtifacts().Result; // Retreives a list of all artifacts
 
         _logger.LogInformation("CatalogueService - Total Artifacts: " + artifacts.Count());
 
-        if (artifacts == null)
+        if (artifacts == null) // Validates the list of artifacts
         {
             return BadRequest("CatalogueService - Artifact list is empty");
         }
 
-        return Ok(artifacts);
+        return Ok(artifacts); // Returns the full list of artifacts
     }
 
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit] // GetArtifact endpoint to retreive the specified Artifact
@@ -163,7 +163,7 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - getArtifactById function hit");
 
-        var artifact = await _catalogueRepository.GetArtifactById(id);
+        var artifact = await _catalogueRepository.GetArtifactById(id); // Retreives the specified Artifact
 
         if (artifact == null)
         {
@@ -195,15 +195,16 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - getAllCategories function hit");
 
-        var categories = _catalogueRepository.GetAllCategories().Result;
+        var categories = _catalogueRepository.GetAllCategories().Result; // Retreives all categories
 
         _logger.LogInformation("CatalogueService - Total Categories: " + categories.Count());
 
-        if (categories == null)
+        if (categories == null) // Validates the list of categories
         {
             return BadRequest("CatalogueService - Category list is empty");
         }
 
+        // Filters out unnecessary attributes from each Category object in the categories list
         var filteredCategories = categories.Select(c => new Category
         {
             CategoryName = c.CategoryName,
@@ -218,11 +219,11 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - getCategoryByCode function hit");
 
-        var category = await _catalogueRepository.GetCategoryByCode(categoryCode); // Retreives the specified category
+        var category = await _catalogueRepository.GetCategoryByCode(categoryCode); // Retreives the specified Category
 
-        if (category == null)
+        if (category == null) // Validates specified Category
         {
-            return BadRequest("CatalogueService - Invalid, Category does not exist: " + categoryCode);
+            return BadRequest("CatalogueService - Invalid, Category does not exist: " + categoryCode); // Return BadRequest in case of invalid CategoryCode
         }
 
         _logger.LogInformation("CatalogueService - Selected category: " + category.CategoryName);
@@ -254,83 +255,75 @@ public class CatalogueController : ControllerBase
         return Ok(result); // Returns the newly created result
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    [HttpGet("getauctions/")] // skal måske bare return auctionDate
-    public async Task<ActionResult<List<AuctionDTO>>> GetAuctions()
+    [HttpGet("getauctions/")]
+    public async Task<ActionResult<List<AuctionDTO>>> GetAuctionsFromAuctionService()
     {
+        // Log information about the function being hit
         _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
 
         using (HttpClient _httpClient = new HttpClient())
         {
-            string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!; // Retreives url to AuctionService from docker-compose.yml file
+            // Retrieve the AuctionService URL and endpoint from environment variables
+            string auctionServiceUrl = Environment.GetEnvironmentVariable("AUCTION_SERVICE_URL")!;
             string getAuctionEndpoint = "/auction/getAllAuctions";
-            
+
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
 
-            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint); // Makes http call to AuctionService
+            // Send a GET request to the AuctionService API to retrieve all auctions
+            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint);
+
+            // Check if the response is successful; if not, return an appropriate status code and error message
             if (!response.IsSuccessStatusCode)
             {
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
             }
 
-            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
+            var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserialize the response content into a List<AuctionDTO> object
 
+            // Check if the deserialization was successful
             if (auctionResponse != null)
             {
                 var allAuctions = auctionResponse.ToList();
 
-                return Ok(auctionResponse);
+                return Ok(auctionResponse); // Return the list of auctions
             }
             else
             {
-                return BadRequest("Failed to retreive allAuctions");
+                return BadRequest("Failed to retrieve allAuctions"); // Return a bad request status and error message if the auctions couldn't be retrieved
             }
         }
     }
+
 
     // SAHARA STANDISERET GetCategory ENDEPUNKT
     [HttpGet("categories/{categoryId}")]
     public async Task<IActionResult> GetCategory(string categoryId)
     {
-        //()
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
 
-        var auctionResponse = await GetAuctions();
+        var auctionResponse = await GetAuctionsFromAuctionService(); // Retrieve all auctions
+        ObjectResult objectResult = (ObjectResult)auctionResponse.Result!; // Extract the ObjectResult from the auctionResponse
+        List<AuctionDTO> auctions = (List<AuctionDTO>)objectResult.Value!; // Retrieve the list of auctions from the ObjectResult
 
-        ObjectResult objectResult = (ObjectResult)auctionResponse.Result;
+        var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Retrieve the category name based on the category ID
 
-        List<AuctionDTO> auctions = (List<AuctionDTO>)objectResult.Value;
+        var category = await _catalogueRepository.GetCategoryByCode(categoryId); // Retrieve the category object based on the category ID
 
-        var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Specifies a categoryName for the result
-
-        var category = await _catalogueRepository.GetCategoryByCode(categoryId); // Specifies a Category for the result
-
+        // Check if the category exists
         if (category == null)
         {
-            return BadRequest("CatalogueService - Invalid, Category does not exist: " + categoryId);
+            return BadRequest("CatalogueService - Invalid, Category does not exist: " + categoryId); // Return a BadRequest if the category does not exist
         }
 
         _logger.LogInformation("CatalogueService - Selected category: " + category.CategoryName);
 
-        var artifacts = await _catalogueRepository.GetAllArtifacts(); // Retreives all Artifacts from _artifacts
+        var artifacts = await _catalogueRepository.GetAllArtifacts(); // Retrieve all artifacts
 
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList(); // Creates a new list of Artifacts that all have the specified categoryId
-        category.CategoryArtifacts = categoryArtifacts; // Populates the CategoryArtifacts attribute on Category.cs with the Artifacts that match the specified categoryId
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList(); // Filter artifacts based on the category ID
+        category.CategoryArtifacts = categoryArtifacts;
 
-        var result = new // Creates a new result, to be returned with filters for both AuctionDTO and Artifact
+        // Prepare the result object with required artifact information
+        var result = new
         {
             Artifacts = category.CategoryArtifacts.Select(a => new
             {
@@ -341,10 +334,8 @@ public class CatalogueController : ControllerBase
             }).ToList()
         };
 
-        return Ok(result);
+        return Ok(result); // Return the result object containing artifact information
 
-
-        //()
 
         /*
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
@@ -361,7 +352,7 @@ public class CatalogueController : ControllerBase
             {
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve Auctions from AuctionService");
             }
-            
+
             var auctionResponse = await response.Content.ReadFromJsonAsync<List<AuctionDTO>>(); // Deserializes the response from the AuctionService endpoint
 
             var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Specifies a categoryName for the result
@@ -397,28 +388,6 @@ public class CatalogueController : ControllerBase
         */
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
@@ -426,33 +395,40 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient _httpClient = new HttpClient())
         {
-            string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!; // Retreives URL to UserService from docker-compose.yml file
+            // Get the user service URL and endpoint for retrieving user information
+            string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!;
             string getUserEndpoint = "/user/getUser/" + id;
 
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
-            HttpResponseMessage response = await _httpClient.GetAsync(userServiceUrl + getUserEndpoint); // Calls the UserService endpoint
+            // Send a GET request to the user service to retrieve user information
+            HttpResponseMessage response = await _httpClient.GetAsync(userServiceUrl + getUserEndpoint);
+
+            // Check if the response is successful
             if (!response.IsSuccessStatusCode)
             {
+                // Return an error status code and message if the retrieval fails
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve UserId from UserService");
             }
 
-            var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>(); // Deserializes the response from UserService
+            var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>(); // Read the user response as UserDTO from the response content
 
-            if (userResponse != null) // Validates the result from the UserService endpoint call
+            if (userResponse != null)
             {
                 _logger.LogInformation($"CatalogueService.GetUser - MongId: {userResponse.MongoId}");
                 _logger.LogInformation($"CatalogueService.GetUser - UserName: {userResponse.UserName}");
 
-                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
+                // Retrieve the artifacts owned by the user
+                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList();
 
-                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList(); // Adds the matching artifacts to the UsersArtifacts attribute on the specified UserDTO
-                
-                return Ok(userResponse);
+                // Filter out deleted artifacts and assign the remaining ones to the user response
+                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
+
+                return Ok(userResponse); // Return the user response with the assigned artifacts
             }
             else
             {
-                return BadRequest("CatalogueService - Failed to retrieve User object");
+                return BadRequest("CatalogueService - Failed to retrieve User object"); // Return a BadRequest if the user object retrieval fails
             }
         }
     }
@@ -465,61 +441,53 @@ public class CatalogueController : ControllerBase
 
     //RabbitMQ på den her
     //POST
-    [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit] // Endpoint for adding a new Artifact to _artifacts
+    [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int? userId)
     {
-        //()
         _logger.LogInformation("CatalogueService - addNewArtifact function hit");
 
-        // Retreive the latest artifactID by retreiving all artifacts and then using .Max to see the highest in the list
+        // Get all existing artifacts and determine the latest ID
         var allArtifacts = await _catalogueRepository.GetAllArtifacts();
         int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
 
-        var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Retreives any Category that mathces with the categoryCode provided in the request body
+        var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Get the category of the artifact based on the provided category code
 
-        var userResponse = await GetUserFromUserService((int)userId); // Retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
-
-        ObjectResult objectResult = (ObjectResult)userResponse.Result;
-
-        UserDTO artifactOwner = (UserDTO)objectResult.Value;
-
+        var userResponse = await GetUserFromUserService((int)userId!); // Retrieve the user information from the user service
+        ObjectResult objectResult = (ObjectResult)userResponse.Result!; // Extract the result from the user response as an ObjectResult
+        UserDTO artifactOwner = (UserDTO)objectResult.Value!; // Get the UserDTO object from the value of the ObjectResult
 
         _logger.LogInformation("CatalogueService - artifactOwner.UserName: " + artifactOwner.UserName);
 
+        // Check if the category is valid
         if (category == null)
         {
             return BadRequest("CatalogueService - Invalid Category code: " + artifact.CategoryCode);
         }
 
-        var newArtifact = new Artifact // Creates new Artifact object
+        // Create a new artifact object with the provided data
+        var newArtifact = new Artifact
         {
             ArtifactID = (int)latestID,
             ArtifactName = artifact!.ArtifactName,
             ArtifactDescription = artifact.ArtifactDescription,
             CategoryCode = artifact.CategoryCode,
-            ArtifactOwner = artifactOwner, // Sets the ArtifactOwner of the new Artifact object as the retreived UserDTO
+            ArtifactOwner = artifactOwner,
             Estimate = artifact.Estimate,
         };
 
+        // Check if the new artifact has a valid ID
         if (newArtifact.ArtifactID == 0)
         {
             return BadRequest("CatalogueService - Invalid ID: " + newArtifact.ArtifactID);
         }
         else
         {
-            await _catalogueRepository.AddNewArtifact(newArtifact); // Adds the new Artifact to _artifacts
+            await _catalogueRepository.AddNewArtifact(newArtifact); // Add the new artifact to the repository
         }
+
         _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
 
-
-        return Ok(newArtifact); // Returns the created result object
-
-
-
-
-        //()
-
-
+        return Ok(newArtifact); // Return the newly created artifact as the response
 
         /*
         _logger.LogInformation("CatalogueService - addNewArtifact function hit");
@@ -532,7 +500,7 @@ public class CatalogueController : ControllerBase
 
         var userResponse = await GetUserFromUserService(userId); // Retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
 
-        
+
         if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
         {
             _logger.LogInformation("CatalogueService - ArtifactOwnerMongo: " + artifactOwner.MongoId);
@@ -684,6 +652,8 @@ public class CatalogueController : ControllerBase
         return Ok($"CatalogueService - CategoryDescription updated. New description for category {updatedCategory.Result.CategoryName}: {newUpdatedCategory.Result.CategoryDescription}");
     }
 
+
+
     [HttpPut("updatePicture/{artifactID}"), DisableRequestSizeLimit] // UpdatePicture endpoint to update the ArtifactPicture attribute on a specified Artifact
     public async Task<IActionResult> UpdatePicture(int artifactID)
     {
@@ -698,8 +668,7 @@ public class CatalogueController : ControllerBase
             return BadRequest("CatalogueService - Artifact not found");
         }
 
-        // Retrieve the image file from the request
-        var formFile = Request.Form.Files.FirstOrDefault();
+        var formFile = Request.Form.Files.FirstOrDefault(); // Retrieve the image file from the request
 
         // Check if an image file was uploaded
         if (formFile == null || formFile.Length == 0)
@@ -716,23 +685,19 @@ public class CatalogueController : ControllerBase
             imageData = memoryStream.ToArray();
         }
 
-        // Assign the image data to the ArtifactPicture attribute of the artifact
-        artifact.ArtifactPicture = imageData;
+        artifact.ArtifactPicture = imageData; // Assign the image data to the ArtifactPicture attribute of the artifact
 
-        // Update the picture in the repository
-        await _catalogueRepository.UpdatePicture(artifactID, formFile);
+        await _catalogueRepository.UpdatePicture(artifactID, formFile); // Update the picture in the repository
 
-        // Return the updated picture as a file response assuming it's in JPEG format
-        return File(artifact.ArtifactPicture, "image/jpeg");
+        return File(artifact.ArtifactPicture, "image/jpeg"); // Return the updated picture as a file response assuming it's in JPEG format
     }
-
 
     [HttpGet("getPicture/{artifactID}")] // GetPicture endpoint to be used to check if ArtifactPicture was successfully updated
     public async Task<IActionResult> GetPicture(int artifactID)
     {
         _logger.LogInformation("CatalogueService - GetPicture function hit");
 
-        var artifact = await _catalogueRepository.GetArtifactById(artifactID);
+        var artifact = await _catalogueRepository.GetArtifactById(artifactID); // Retreives the specified artifact
 
         if (artifact == null)
         {
@@ -746,6 +711,8 @@ public class CatalogueController : ControllerBase
 
         return File(artifact.ArtifactPicture, "image/jpeg"); // Assuming the picture is in JPEG format
     }
+
+
 
     [HttpPut("activateArtifact/{id}"), DisableRequestSizeLimit] // ActivateArtifact endpoint to change Status of Artifact to "Active" - used for putting artifact on auction
     public async Task<string> ActivateArtifact(int id)
@@ -767,7 +734,6 @@ public class CatalogueController : ControllerBase
 
         return "CatalogueService - Artifact status changed to 'Active'";
     }
-
 
 
 
@@ -806,7 +772,8 @@ public class CatalogueController : ControllerBase
 
         var categoryArtifacts = new List<Artifact>(); // Initializes a new list of Artifacts intended to filter Artifacts with matching CategoryCode
 
-        List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(a => a.Status != "Deleted").ToList(); // retreives all Artifacts whose status does NOT equal "Deleted"
+        // Retreives all Artifacts whose status does NOT equal "Deleted"
+        List<Artifact> allArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(a => a.Status != "Deleted").ToList();
 
         for (int i = 0; i < allArtifacts.Count(); i++) // Loops through all Artifacts and adds any that match with the specified CategoryCode to the categoryArtifacts List
         {
@@ -831,7 +798,6 @@ public class CatalogueController : ControllerBase
             await _catalogueRepository.DeleteCategory(categoryCode);
             _logger.LogInformation($"CatalogueService - Category deleted");
         }
-
 
         return (IActionResult)Ok(GetAllCategories()).Value!;
     }

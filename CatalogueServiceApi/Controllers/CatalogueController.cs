@@ -204,7 +204,7 @@ public class CatalogueController : ControllerBase
             return BadRequest("CatalogueService - Category list is empty");
         }
 
-        var filteredCategories = categories.Select(c => new // Filters the information returned by the function
+        var filteredCategories = categories.Select(c => new Category
         {
             CategoryName = c.CategoryName,
             CategoryDescription = c.CategoryDescription
@@ -383,7 +383,7 @@ public class CatalogueController : ControllerBase
 
         ObjectResult objectResult = (ObjectResult)userResponse.Result;
 
-        UserDTO? artifactOwner = (UserDTO?)objectResult.Value;
+        UserDTO artifactOwner = (UserDTO)objectResult.Value;
 
 
         _logger.LogInformation("CatalogueService - artifactOwner.UserName: " + artifactOwner.UserName);
@@ -737,5 +737,4 @@ public class CatalogueController : ControllerBase
 
         return (IActionResult)Ok(GetAllCategories()).Value!;
     }
-
 }

@@ -30,4 +30,10 @@
     <ProjectReference Include="..\CatalogueServiceApi\CatalogueServiceApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

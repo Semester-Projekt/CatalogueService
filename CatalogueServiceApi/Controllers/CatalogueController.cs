@@ -421,6 +421,8 @@ public class CatalogueController : ControllerBase
         int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
 
         var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Get the category of the artifact based on the provided category code
+        var categoryArtifacts = category.CategoryArtifacts;
+        _logger.LogInformation("CatalogueService - category.artifacts count:" + category.CategoryArtifacts!.Count);
 
         var userResponse = await GetUserFromUserService((int)userId!); // Retrieve the user information from the user service
         ObjectResult objectResult = (ObjectResult)userResponse.Result!; // Extract the result from the user response as an ObjectResult
@@ -457,8 +459,10 @@ public class CatalogueController : ControllerBase
         }
         else
         {
-            category.CategoryArtifacts!.Add(newArtifact);
             await _catalogueRepository.AddNewArtifact(newArtifact); // Add the new artifact to the repository
+            _logger.LogInformation("CatalogueService - category.artifacts count inden .Add():" + category.CategoryArtifacts!.Count);
+            await _catalogueRepository.AddArtifactToCategoryArtifacts(category.CategoryCode!, newArtifact);
+            _logger.LogInformation("CatalogueService - category.artifacts count efter .Add():" + category.CategoryArtifacts!.Count);
         }
 
         _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");

@@ -155,11 +155,19 @@ namespace Model
             await _artifacts.UpdateOneAsync(filter, update);
         }
 
+        public virtual async Task AddArtifactToCategoryArtifacts(string categoryCode, Artifact? artifact)
+        {
+            var filter = Builders<Category>.Filter.Eq(a => a.CategoryCode, categoryCode);
+            var update = Builders<Category>.Update
+                .Push(a => a.CategoryArtifacts, artifact);
+            await _categories.UpdateOneAsync(filter, update);
+        }
 
 
 
 
-        
+
+
         // DELETE
         public virtual async Task DeleteArtifact(int id)
         {

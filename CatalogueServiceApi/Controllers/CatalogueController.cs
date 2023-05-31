@@ -26,7 +26,7 @@ using RabbitMQ.Client;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using System.Net.Http.Headers;
 
 namespace Controllers;
 
@@ -158,6 +158,7 @@ public class CatalogueController : ControllerBase
         return Ok(artifacts); // Returns the full list of artifacts
     }
 
+    [Authorize]
     [HttpGet("getArtifactById/{id}"), DisableRequestSizeLimit] // GetArtifact endpoint to retreive the specified Artifact
     public async Task<IActionResult> GetArtifactById(int id)
     {
@@ -190,6 +191,7 @@ public class CatalogueController : ControllerBase
         return Ok(filteredArtifact); // Returns the filtered Artifact
     }
 
+    [Authorize]
     [HttpGet("getAllCategories"), DisableRequestSizeLimit] // Endpoint to retreive all categories
     public IActionResult GetAllCategories()
     {
@@ -214,6 +216,7 @@ public class CatalogueController : ControllerBase
         return Ok(filteredCategories); // Returns the filtered list of categories
     }
 
+    [Authorize]
     [HttpGet("getCategoryByCode/{categoryCode}"), DisableRequestSizeLimit] // Endpoint retreive a specific Category and the related Artifacts
     public async Task<IActionResult> GetCategoryByCode(string categoryCode)
     {
@@ -255,10 +258,10 @@ public class CatalogueController : ControllerBase
         return Ok(result); // Returns the newly created result
     }
 
+    [Authorize]
     [HttpGet("getauctions/")]
     public async Task<ActionResult<List<AuctionDTO>>> GetAuctionsFromAuctionService()
     {
-        // Log information about the function being hit
         _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
 
         using (HttpClient _httpClient = new HttpClient())
@@ -269,8 +272,19 @@ public class CatalogueController : ControllerBase
 
             _logger.LogInformation(auctionServiceUrl + getAuctionEndpoint);
 
-            // Send a GET request to the AuctionService API to retrieve all auctions
-            HttpResponseMessage response = await _httpClient.GetAsync(auctionServiceUrl + getAuctionEndpoint);
+            // Retrieve the current user's token from the request
+            var tokenValue = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+            _logger.LogInformation("CatalogueService - token first default: " + tokenValue);
+            var token = tokenValue?.Replace("Bearer ", "");
+            _logger.LogInformation("CatalogueService - token w/o bearer: " + token);
+
+            // Create a new HttpRequestMessage to include the token
+            var request = new HttpRequestMessage(HttpMethod.Get, auctionServiceUrl + getAuctionEndpoint);
+            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // Send the request to the AuctionService API to retrieve all auctions
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
 
             // Check if the response is successful; if not, return an appropriate status code and error message
             if (!response.IsSuccessStatusCode)
@@ -283,8 +297,6 @@ public class CatalogueController : ControllerBase
             // Check if the deserialization was successful
             if (auctionResponse != null)
             {
-                var allAuctions = auctionResponse.ToList();
-
                 return Ok(auctionResponse); // Return the list of auctions
             }
             else
@@ -293,6 +305,8 @@ public class CatalogueController : ControllerBase
             }
         }
     }
+
+
 
 
     // SAHARA STANDISERET GetCategory ENDEPUNKT
@@ -387,7 +401,7 @@ public class CatalogueController : ControllerBase
         }
         */
     }
-
+    [Authorize]
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
     {
@@ -401,8 +415,20 @@ public class CatalogueController : ControllerBase
 
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
-            // Send a GET request to the user service to retrieve user information
-            HttpResponseMessage response = await _httpClient.GetAsync(userServiceUrl + getUserEndpoint);
+            // Retrieve the current user's token from the request
+            var tokenValue = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+            _logger.LogInformation("CatalogueService - token first default: " + tokenValue);
+            var token = tokenValue?.Replace("Bearer ", "");
+            _logger.LogInformation("CatalogueService - token w/o bearer: " + token);
+
+            // Create a new HttpRequestMessage to include the token
+            var request = new HttpRequestMessage(HttpMethod.Get, userServiceUrl + getUserEndpoint);
+            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // Send the request to the UserService API to retrieve the user
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+
 
             // Check if the response is successful
             if (!response.IsSuccessStatusCode)
@@ -441,6 +467,7 @@ public class CatalogueController : ControllerBase
 
     //RabbitMQ på den her
     //POST
+    [Authorize]
     [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
     public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int? userId)
     {
@@ -612,6 +639,7 @@ public class CatalogueController : ControllerBase
 
 
     //PUT
+    [Authorize]
     [HttpPut("updateArtifact/{id}"), DisableRequestSizeLimit] // Endpoint for updating an Artifact in _artifacts
     public async Task<IActionResult> UpdateArtifact(int id, [FromBody] Artifact artifact)
     {
@@ -653,7 +681,7 @@ public class CatalogueController : ControllerBase
     }
 
 
-
+    [Authorize]
     [HttpPut("updatePicture/{artifactID}"), DisableRequestSizeLimit] // UpdatePicture endpoint to update the ArtifactPicture attribute on a specified Artifact
     public async Task<IActionResult> UpdatePicture(int artifactID)
     {
@@ -741,6 +769,7 @@ public class CatalogueController : ControllerBase
 
 
     //DELETE
+    [Authorize]
     [HttpPut("deleteArtifact/{id}"), DisableRequestSizeLimit] // DeleteArtifact endpoint to change Status of Artifact to "Deleted"
     public async Task<string> DeleteArtifact(int id)
     {

@@ -15,7 +15,7 @@ namespace Model
 		public string? MongoId { get; set; }
 
         [BsonElement("ArtifactID")]
-        public int ArtifactID { get; set; }
+        public int? ArtifactID { get; set; }
 
         [BsonElement("ArtifactName")]
         public string? ArtifactName { get; set; }
@@ -30,7 +30,7 @@ namespace Model
         public UserDTO? ArtifactOwner { get; set; }
 
         [BsonElement("Estimate")]
-        public int Estimate { get; set; }
+        public int? Estimate { get; set; }
 
         [BsonElement("ArtifactPicture")]
         public byte[]? ArtifactPicture { get; set; } = null; // Represents the image data of the artifact as a nullable byte array.

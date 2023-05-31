@@ -342,7 +342,7 @@ public class CatalogueController : ControllerBase
 
         var artifacts = await _catalogueRepository.GetAllArtifacts(); // Retrieve all artifacts
 
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId).ToList(); // Filter artifacts based on the category ID
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryId && a.Status == "Active").ToList(); // Filter artifacts based on the category ID
         category.CategoryArtifacts = categoryArtifacts;
 
         // Prepare the result object with required artifact information
@@ -458,6 +458,7 @@ public class CatalogueController : ControllerBase
         else
         {
             await _catalogueRepository.AddNewArtifact(newArtifact); // Add the new artifact to the repository
+            category.CategoryArtifacts!.Add(newArtifact);
         }
 
         _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
@@ -637,7 +638,7 @@ public class CatalogueController : ControllerBase
 
         var activatedArtifact = await _catalogueRepository.GetArtifactById(id); // Retreives the specified Artifact
 
-        _logger.LogInformation("CatalogueService - ID for deletion: " + activatedArtifact);
+        _logger.LogInformation("CatalogueService - ID for activation: " + activatedArtifact);
 
         if (activatedArtifact == null)
         {

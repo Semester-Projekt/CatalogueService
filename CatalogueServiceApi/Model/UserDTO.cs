@@ -18,7 +18,7 @@ namespace Model
         public string? MongoId { get; set; }
 
         [BsonElement("UserId")]
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
 
         [BsonElement("UserName")]
         public string? UserName { get; set; }
@@ -30,7 +30,7 @@ namespace Model
         public string? UserEmail { get; set; }
 
         [BsonElement("UserPhone")]
-        public int UserPhone { get; set; }
+        public int? UserPhone { get; set; }
 
         [BsonElement("UserAddress")]
         public string? UserAddress { get; set; }

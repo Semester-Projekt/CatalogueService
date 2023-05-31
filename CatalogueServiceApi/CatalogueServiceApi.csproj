@@ -24,6 +24,9 @@
 
 
   <ItemGroup>
+    <None Remove="Schemas\" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageReference Include="Nlog.Web.AspNetCore" Version="5.3.0" />
     <PackageReference Include="rabbitmq.client" Version="6.5.0" />
@@ -56,4 +59,7 @@
 
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Schemas\" />
+  </ItemGroup>
 </Project>

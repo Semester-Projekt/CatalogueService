@@ -457,8 +457,8 @@ public class CatalogueController : ControllerBase
         }
         else
         {
-            await _catalogueRepository.AddNewArtifact(newArtifact); // Add the new artifact to the repository
             category.CategoryArtifacts!.Add(newArtifact);
+            await _catalogueRepository.AddNewArtifact(newArtifact); // Add the new artifact to the repository
         }
 
         _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");

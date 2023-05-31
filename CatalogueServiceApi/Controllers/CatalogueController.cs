@@ -446,6 +446,11 @@ public class CatalogueController : ControllerBase
 
         _logger.LogInformation("CatalogueService - artifactOwner.UserName: " + artifactOwner.UserName);
 
+        if (artifactOwner.UserId == null)
+        {
+            return BadRequest("User not found");
+        }
+
         // Check if the category is valid
         if (category == null)
         {
@@ -475,78 +480,16 @@ public class CatalogueController : ControllerBase
 
         _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
 
-        return Ok(newArtifact); // Return the newly created artifact as the response
-
-        /*
-        _logger.LogInformation("CatalogueService - addNewArtifact function hit");
-
-        // Retreive the latest artifactID by retreiving all artifacts and then using .Max to see the highest in the list
-        var allArtifacts = await _catalogueRepository.GetAllArtifacts();
-        int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
-
-        var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Retreives any Category that mathces with the categoryCode provided in the request body
-
-        var userResponse = await GetUserFromUserService(userId); // Retreives the UserDTO from GetUserFromUserService to later add as ArtifactOwner
-
-
-        if (userResponse.Result is ObjectResult objectResult && objectResult.Value is UserDTO artifactOwner)
+        var result = new
         {
-            _logger.LogInformation("CatalogueService - ArtifactOwnerMongo: " + artifactOwner.MongoId);
-            _logger.LogInformation("CatalogueService - ArtifactOwnerName: " + artifactOwner.UserName);
-
-            if (category == null)
-            {
-                return BadRequest("CatalogueService - Invalid Category code: " + artifact.CategoryCode);
-            }
-
-            var newArtifact = new Artifact // Creates new Artifact object
-            {
-                ArtifactID = (int)latestID,
-                ArtifactName = artifact!.ArtifactName,
-                ArtifactDescription = artifact.ArtifactDescription,
-                CategoryCode = artifact.CategoryCode,
-                ArtifactOwner = artifactOwner, // Sets the ArtifactOwner of the new Artifact object as the retreived UserDTO
-                Estimate = artifact.Estimate,
-            };
-            _logger.LogInformation("CatalogueService - new Artifact object made. ArtifactID: " + newArtifact.ArtifactID);
+            Status = "Artifact successfully added",
+            ArtifactName = artifact.ArtifactName,
+            ArtifactDescription = artifact.ArtifactDescription,
+            Estimate = artifact.Estimate
+        };
 
 
-            if (newArtifact.ArtifactID == 0)
-            {
-                return BadRequest("CatalogueService - Invalid ID: " + newArtifact.ArtifactID);
-            }
-            else
-            {
-                await _catalogueRepository.AddNewArtifact(newArtifact); // Adds the new Artifact to _artifacts
-            }
-            _logger.LogInformation("CatalogueService - new Artifact object added to _artifacts");
-
-
-            var result = new // Creates a new result which is to be returned in case of succes on AddNewUser
-            {
-                Artifactname = artifact.ArtifactName,
-                ArtifactDescription = artifact.ArtifactDescription,
-                CategoryCode = artifact.CategoryCode,
-                ArtifactOwner = new
-                {
-                    artifactOwner.UserName,
-                    artifactOwner.UserEmail,
-                    artifactOwner.UserPhone
-                },
-                Estimate = artifact.Estimate
-            };
-
-            // Publish the new artifact message to RabbitMQ
-            //PublishNewArtifactMessage(newArtifact, result);
-            PublishNewArtifactMessage(result);
-
-            return Ok(result); // Returns the created result object
-        }
-        else
-        {
-            return BadRequest("CatalogueService - Failed to retrieve User object");
-        }
-        */
+        return Ok(result); // Return the newly created artifact as the response
     }
 
     [HttpPost("addNewCategory"), DisableRequestSizeLimit] // Endpoint for adding a new Category to _categories

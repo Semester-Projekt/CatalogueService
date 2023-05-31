@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using RabbitMQ.Client.Exceptions;
 using Moq.Protected;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace CatalogueServiceApi.Test;
 
@@ -108,7 +109,6 @@ public class CatalogueControllerTests
 
 
 
-
     // UNIT TEST AF SAHARA STANDADISERING ENDEPUNKT GetGategories
     [Test]
     public async Task VALID_TestSAHARAEndpoint()
@@ -121,6 +121,7 @@ public class CatalogueControllerTests
         var user2 = new UserDTO(2, "TestUserName2", "TestUserPassword2", "TestUserEmail2", 22222222, "TestUserAddress2");
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
         var artifact2 = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "T2", user2, 2000);
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IkRhbmllbCIsImV4cCI6MTY4ODExNDk0NCwiaXNzIjoibWVnYWxhbmdzdXBlcmR1cGVydGVzdElzc3VlciIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3QifQ.6t_GQOVA9f8LDsz - GkKDARhtNXJ52MZC2xSm2Z_XKSE";
 
         // Create collections of categories and artifacts
         var allCategories = new List<Category> { category1, category2 };
@@ -133,6 +134,9 @@ public class CatalogueControllerTests
         mockRepo.Setup(svc => svc.GetAllCategories()).ReturnsAsync(allCategories);
 
         var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
+
+        controller.ControllerContext.HttpContext = new DefaultHttpContext();
+        controller.ControllerContext.HttpContext.Request.Headers["Authorization"] = "Bearer " + token;
 
         // Act
         var result = await controller.GetCategory(category1.CategoryCode!); // Call the endpoint method to get a specific category
@@ -157,7 +161,8 @@ public class CatalogueControllerTests
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
-
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IkRhbmllbCIsImV4cCI6MTY4ODExNDk0NCwiaXNzIjoibWVnYWxhbmdzdXBlcmR1cGVydGVzdElzc3VlciIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3QifQ.6t_GQOVA9f8LDsz - GkKDARhtNXJ52MZC2xSm2Z_XKSE";
+        
         // Create collections of categories and existing artifacts
         var allCategories = new List<Category> { category1 };
         var allArtifacts = new List<Artifact> { artifact1 };
@@ -171,6 +176,9 @@ public class CatalogueControllerTests
         mockRepo.Setup(svc => svc.AddNewArtifact(It.IsAny<Artifact>())).Returns(Task.FromResult<Artifact?>(newArtifact));
 
         var controller = new CatalogueController(_logger, _configuration, mockRepo.Object); // Create a controller instance with the mock repository
+
+        controller.ControllerContext.HttpContext = new DefaultHttpContext();
+        controller.ControllerContext.HttpContext.Request.Headers["Authorization"] = "Bearer " + token;
 
         // Act
         var result = await controller.AddNewArtifact(newArtifact, newArtifact.ArtifactOwner!.UserId); // Call the endpoint method to add a new artifact
@@ -220,6 +228,7 @@ public class CatalogueControllerTests
         Assert.That(result, Is.TypeOf<OkObjectResult>());
         Assert.That(((result as OkObjectResult)?.Value as IEnumerable<Category>)!.ToList(), Is.TypeOf<List<Category>>());
     }
+
 
     [Test]
     public async Task INVALID_TestDeleteCategory_CategoryContainsArtifacts()

@@ -260,7 +260,7 @@ public class CatalogueController : ControllerBase
 
     [Authorize]
     [HttpGet("getauctions/")]
-    public async Task<ActionResult<List<AuctionDTO>>> GetAuctionsFromAuctionService()
+    public virtual async Task<ActionResult<List<AuctionDTO>>> GetAuctionsFromAuctionService()
     {
         _logger.LogInformation("CatalogueService - SAHARA - getAuctions function hit");
 
@@ -314,10 +314,12 @@ public class CatalogueController : ControllerBase
     public async Task<IActionResult> GetCategory(string categoryId)
     {
         _logger.LogInformation("CatalogueService - SAHARA - getCategories function hit");
-
+        
         var auctionResponse = await GetAuctionsFromAuctionService(); // Retrieve all auctions
         ObjectResult objectResult = (ObjectResult)auctionResponse.Result!; // Extract the ObjectResult from the auctionResponse
         List<AuctionDTO> auctions = (List<AuctionDTO>)objectResult.Value!; // Retrieve the list of auctions from the ObjectResult
+
+        //List<AuctionDTO> auctions = auctionResponse.Value;
 
         var categoryName = _catalogueRepository.GetCategoryByCode(categoryId).Result.CategoryName; // Retrieve the category name based on the category ID
 
@@ -401,6 +403,7 @@ public class CatalogueController : ControllerBase
         }
         */
     }
+    
     [Authorize]
     [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
     public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)

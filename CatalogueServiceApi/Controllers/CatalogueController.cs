@@ -235,7 +235,7 @@ public class CatalogueController : ControllerBase
         _logger.LogInformation("CatalogueService - Selected category: " + category.CategoryName);
 
         var artifacts = await _catalogueRepository.GetAllArtifacts(); // Retreives allArtifacts
-        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode).ToList(); // Creates a new list of Artifacts that all have the specified categoryCode
+        var categoryArtifacts = artifacts.Where(a => a.CategoryCode == categoryCode && a.Status != "Deleted").ToList(); // Creates a new list of Artifacts that all have the specified categoryCode
         category.CategoryArtifacts = categoryArtifacts; // Populates the CategoryArtifacts attribute on Category.cs with the Artifacts that match the specified categoryCode
 
         var result = new // Creates a new result, which filters and selects specific attributes to return from both Artifact.cs and Category.cs

@@ -164,7 +164,7 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - getArtifactById function hit");
 
-        var artifact = await _catalogueRepository.GetArtifactById(id); // Retreives the specified Artifact
+        var artifact = await _catalogueRepository.GetArtifactById(id);
 
         if (artifact == null)
         {
@@ -188,7 +188,7 @@ public class CatalogueController : ControllerBase
             artifact.ArtifactPicture
         };
 
-        return Ok(filteredArtifact); // Returns the filtered Artifact
+        return Ok(artifact); // Returns the filtered Artifact
     }
 
     [Authorize]
@@ -370,52 +370,33 @@ public class CatalogueController : ControllerBase
 
         using (HttpClient _httpClient = new HttpClient())
         {
-            // Get the user service URL and endpoint for retrieving user information
-            string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!;
+            string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!; // Retreives URL to UserService from docker-compose.yml file
             string getUserEndpoint = "/user/getUser/" + id;
-            
+
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
-            // Retrieve the current user's token from the request
-            var tokenValue = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
-            _logger.LogInformation("CatalogueService - token first default: " + tokenValue);
-            var token = tokenValue?.Replace("Bearer ", "");
-            _logger.LogInformation("CatalogueService - token w/o bearer: " + token);
-
-            // Create a new HttpRequestMessage to include the token
-            var request = new HttpRequestMessage(HttpMethod.Get, userServiceUrl + getUserEndpoint);
-            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            // Send the request to the UserService API to retrieve the user
-            HttpResponseMessage response = await _httpClient.SendAsync(request);
-
-
-            // Check if the response is successful
+            HttpResponseMessage response = await _httpClient.GetAsync(userServiceUrl + getUserEndpoint); // Calls the UserService endpoint
             if (!response.IsSuccessStatusCode)
             {
-                // Return an error status code and message if the retrieval fails
                 return StatusCode((int)response.StatusCode, "CatalogueService - Failed to retrieve UserId from UserService");
             }
 
-            var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>(); // Read the user response as UserDTO from the response content
+            var userResponse = await response.Content.ReadFromJsonAsync<UserDTO>(); // Deserializes the response from UserService
 
-            if (userResponse != null)
+            if (userResponse != null) // Validates the result from the UserService endpoint call
             {
                 _logger.LogInformation($"CatalogueService.GetUser - MongId: {userResponse.MongoId}");
                 _logger.LogInformation($"CatalogueService.GetUser - UserName: {userResponse.UserName}");
 
-                // Retrieve the artifacts owned by the user
-                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList();
+                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
 
-                // Filter out deleted artifacts and assign the remaining ones to the user response
-                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList();
+                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList(); // Adds the matching artifacts to the UsersArtifacts attribute on the specified UserDTO
 
-                return Ok((UserDTO)userResponse); // Return the user response with the assigned artifacts
+                return Ok(userResponse);
             }
             else
             {
-                return BadRequest("CatalogueService - Failed to retrieve User object"); // Return a BadRequest if the user object retrieval fails
+                return BadRequest("CatalogueService - Failed to retrieve User object");
             }
         }
     }
@@ -651,7 +632,9 @@ public class CatalogueController : ControllerBase
     {
         _logger.LogInformation("CatalogueService - activateArtifact function hit");
 
-        var activatedArtifact = await GetArtifactById(id); // Retreives the specified Artifact
+        var allArtifacts = await _catalogueRepository.GetAllArtifacts();
+
+        var activatedArtifact = await _catalogueRepository.GetArtifactById(id); // Retreives the specified Artifact
 
         _logger.LogInformation("CatalogueService - ID for deletion: " + activatedArtifact);
 
@@ -667,7 +650,7 @@ public class CatalogueController : ControllerBase
         return "CatalogueService - Artifact status changed to 'Active'";
     }
 
-
+    
 
 
 

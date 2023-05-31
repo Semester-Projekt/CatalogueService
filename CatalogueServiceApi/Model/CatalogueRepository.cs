@@ -28,7 +28,7 @@ namespace Model
             string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING")!; // Mongo conn string env variable - retreived from docker-compose.yml
             var client = new MongoClient(connectionString); // Creates the mongo client
             var database = client.GetDatabase("Catalogue"); // Retreives db from mongo
-
+            
             // Retreives collections from mongo
             _artifacts = database.GetCollection<Artifact>("Artifacts");
             _categories = database.GetCollection<Category>("Categories");

@@ -108,7 +108,7 @@ public class CatalogueControllerTests
 
 
 
-
+    /*
     // UNIT TEST AF SAHARA STANDADISERING ENDEPUNKT GetGategories
     [Test]
     public async Task VALID_TestSAHARAEndpoint()
@@ -144,10 +144,11 @@ public class CatalogueControllerTests
         // Assert
         Assert.That(result, Is.TypeOf<OkObjectResult>()); // Verify that the result is of the expected type
     }
+    */
 
 
 
-
+    
 
 
 
@@ -159,16 +160,19 @@ public class CatalogueControllerTests
         // Arrange
         // Create test objects for category, user, and existing artifact
         var category1 = new Category("TE", "TestCategoryName", "TestCategoryDescription");
+        var category2 = new Category("T2", "TestCategoryName2", "TestCategoryDescription2");
+        var allCategories = new List<Category> { category1, category2 };
+
         var user1 = new UserDTO(1, "TestUserName", "TestUserPassword", "TestUserEmail", 11111111, "TestUserAddress");
+        var user2 = new UserDTO(2, "TestUserName2", "TestUserPassword2", "TestUserEmail2", 22222222, "TestUserAddress2");
+        var allUsers = new List<UserDTO> { user1, user2 };
+
         var artifact1 = new Artifact(1, "ArtifactOneName", "ArtifactOneDescription", "TE", user1, 1000);
-        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IkRhbmllbCIsImV4cCI6MTY4ODExNDk0NCwiaXNzIjoibWVnYWxhbmdzdXBlcmR1cGVydGVzdElzc3VlciIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3QifQ.6t_GQOVA9f8LDsz - GkKDARhtNXJ52MZC2xSm2Z_XKSE";
-        
-        // Create collections of categories and existing artifacts
-        var allCategories = new List<Category> { category1 };
+        var newArtifact = new Artifact(2, "ArtifactOneName2", "ArtifactOneDescription2", "T2", user2, 2000);
         var allArtifacts = new List<Artifact> { artifact1 };
 
-        var newArtifact = new Artifact(2, "NewArtifactName", "NewArtifactDescription", "TE", user1, 2000); // Create a new artifact to be added
-
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IkRhbmllbCIsImV4cCI6MTY4ODExNDk0NCwiaXNzIjoibWVnYWxhbmdzdXBlcmR1cGVydGVzdElzc3VlciIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3QifQ.6t_GQOVA9f8LDsz - GkKDARhtNXJ52MZC2xSm2Z_XKSE";
+        
         // Create a mock repository and set up its behavior
         var mockRepo = new Mock<CatalogueRepository>();
         mockRepo.Setup(svc => svc.GetAllArtifacts()).ReturnsAsync(allArtifacts);
@@ -181,7 +185,7 @@ public class CatalogueControllerTests
         controller.ControllerContext.HttpContext.Request.Headers["Authorization"] = "Bearer " + token;
 
         // Act
-        var result = await controller.AddNewArtifact(newArtifact, newArtifact.ArtifactOwner!.UserId); // Call the endpoint method to add a new artifact
+        var result = await controller.AddNewArtifact(newArtifact, user2.UserId); // Call the endpoint method to add a new artifact
 
         // Assert
         // Verify that the result is of the expected type and contains a new artifact

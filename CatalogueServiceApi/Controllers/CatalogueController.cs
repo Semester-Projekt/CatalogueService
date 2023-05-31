@@ -256,6 +256,7 @@ public class CatalogueController : ControllerBase
                 ArtifactPicture = a.ArtifactPicture,
                 Status = a.Status
             }).ToList()
+
         };
 
         return Ok(result); // Returns the newly created result

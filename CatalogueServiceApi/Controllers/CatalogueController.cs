@@ -207,12 +207,6 @@ public class CatalogueController : ControllerBase
         }
 
         // Filters out unnecessary attributes from each Category object in the categories list
-        var filteredCategories = categories.Select(c => new Category
-        {
-            CategoryName = c.CategoryName,
-            CategoryDescription = c.CategoryDescription
-        });
-
         var result = new
         {
             Categories = categories.Select(a => new
@@ -221,9 +215,7 @@ public class CatalogueController : ControllerBase
                 a.CategoryDescription
             })
         };
-
         
-
         return Ok(result); // Returns the filtered list of categories
     }
 

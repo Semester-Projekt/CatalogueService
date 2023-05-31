@@ -213,7 +213,18 @@ public class CatalogueController : ControllerBase
             CategoryDescription = c.CategoryDescription
         });
 
-        return Ok(filteredCategories); // Returns the filtered list of categories
+        var result = new
+        {
+            Categories = categories.Select(a => new
+            {
+                a.CategoryName,
+                a.CategoryDescription
+            })
+        };
+
+        
+
+        return Ok(result); // Returns the filtered list of categories
     }
 
     [Authorize]

@@ -185,7 +185,7 @@ public class CatalogueControllerTests
         controller.ControllerContext.HttpContext.Request.Headers["Authorization"] = "Bearer " + token;
 
         // Act
-        var result = await controller.AddNewArtifact(newArtifact, user2.UserId); // Call the endpoint method to add a new artifact
+        var result = await controller.AddNewArtifact(newArtifact, user2.UserName); // Call the endpoint method to add a new artifact
 
         // Assert
         // Verify that the result is of the expected type and contains a new artifact

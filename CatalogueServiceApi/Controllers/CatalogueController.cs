@@ -378,7 +378,7 @@ public class CatalogueController : ControllerBase
         int? latestID = allArtifacts.DefaultIfEmpty().Max(a => a == null ? 0 : a.ArtifactID) + 1;
 
         var category = await _catalogueRepository.GetCategoryByCode(artifact!.CategoryCode!); // Get the category of the artifact based on the provided category code
-        var categoryArtifacts = category.CategoryArtifacts;
+        //var categoryArtifacts = category.CategoryArtifacts;
         _logger.LogInformation("CatalogueService - category.artifacts count:" + category.CategoryArtifacts!.Count);
 
         var userResponse = await GetUserFromUserService(userName!); // Retrieve the user information from the user service

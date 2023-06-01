@@ -34,13 +34,6 @@
     "UserAddress": {
       "type": "string",
       "description": "The address of the user."
-    },
-    "UsersArtifacts": {
-      "type": "array",
-      "items": {
-        "$ref": "./ArtifactSchema.json"
-      },
-      "description": "The artifacts associated with the user."
     }
   },
   "required": [ "UserId", "UserName", "UserPassword", "UserEmail" ]

@@ -325,15 +325,15 @@ public class CatalogueController : ControllerBase
 
     
     [Authorize]
-    [HttpGet("getUserFromUserService/{id}"), DisableRequestSizeLimit]
-    public async Task<ActionResult<UserDTO>> GetUserFromUserService(int id)
+    [HttpGet("getUserFromUserService/{userName}"), DisableRequestSizeLimit]
+    public async Task<ActionResult<UserDTO>> GetUserFromUserService(string userName)
     {
         _logger.LogInformation("CatalogueService - GetUser function hit");
 
         using (HttpClient _httpClient = new HttpClient())
         {
             string userServiceUrl = Environment.GetEnvironmentVariable("USER_SERVICE_URL")!; // Retreives URL to UserService from docker-compose.yml file
-            string getUserEndpoint = "/user/getUser/" + id;
+            string getUserEndpoint = "/user/getUser/" + userName;
 
             _logger.LogInformation($"CatalogueService - {userServiceUrl + getUserEndpoint}");
 
@@ -372,8 +372,8 @@ public class CatalogueController : ControllerBase
     //RabbitMQ på den her
     //POST
     [Authorize]
-    [HttpPost("addNewArtifact/{userId}"), DisableRequestSizeLimit]
-    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, int? userId)
+    [HttpPost("addNewArtifact/{userName}"), DisableRequestSizeLimit]
+    public async Task<IActionResult> AddNewArtifact([FromBody] Artifact? artifact, string? userName)
     {
         _logger.LogInformation("CatalogueService - addNewArtifact function hit");
 
@@ -385,7 +385,7 @@ public class CatalogueController : ControllerBase
         var categoryArtifacts = category.CategoryArtifacts;
         _logger.LogInformation("CatalogueService - category.artifacts count:" + category.CategoryArtifacts!.Count);
 
-        var userResponse = await GetUserFromUserService((int)userId!); // Retrieve the user information from the user service
+        var userResponse = await GetUserFromUserService(userName!); // Retrieve the user information from the user service
         ObjectResult objectResult = (ObjectResult)userResponse.Result!; // Extract the result from the user response as an ObjectResult
         UserDTO artifactOwner = (UserDTO)objectResult.Value!; // Get the UserDTO object from the value of the ObjectResult
 

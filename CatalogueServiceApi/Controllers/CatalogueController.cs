@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Net.Http;
-using RabbitMQ.Client;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -46,7 +45,6 @@ public class CatalogueController : ControllerBase
         _config = config;
         _catalogueRepository = catalogueRepository;
 
-        _logger.LogInformation($"Connecting to rabbitMQ on {_config["rabbithostname"]}");
 
         // Logger host information
         var hostName = System.Net.Dns.GetHostName();
@@ -54,43 +52,6 @@ public class CatalogueController : ControllerBase
         var _ipaddr = ips.First().MapToIPv4().ToString();
         _logger.LogInformation(1, $"UserService - Auth service responding from {_ipaddr}");
     }
-
-    //RabbitMQ start
-    //  private object PublishNewArtifactMessage(Artifact newArtifact, object result)
-    private object PublishNewArtifactMessage(object result)
-    {
-        // Configure RabbitMQ connection settings
-        var factory = new ConnectionFactory()
-        {
-            HostName = _config["rabbithostname"],  // Replace with your RabbitMQ container name or hostname
-                                                   //       UserName = "guest",     // Replace with your RabbitMQ username
-                                                   //       Password = "guest"      // Replace with your RabbitMQ password
-        };
-
-
-        using (var connection = factory.CreateConnection())
-        using (var channel = connection.CreateModel())
-        {
-            // Declare a queue
-            channel.QueueDeclare(queue: "test-artifact-queue",
-                                 durable: false,
-                                 exclusive: false,
-                                 autoDelete: false,
-                                 arguments: null);
-
-            // Convert newArtifact to a JSON string
-            var json = JsonSerializer.Serialize(result);
-
-            // Publish the message to the queue
-            var body = Encoding.UTF8.GetBytes(json);
-            channel.BasicPublish(exchange: "", routingKey: "test-artifact-queue", basicProperties: null, body: body);
-        }
-
-        // Return the result object
-        return result;
-    }
-    //RabbitMQ slut
-
 
 
     // VERSION_ENDEPUNKT

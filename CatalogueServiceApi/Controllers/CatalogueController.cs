@@ -457,7 +457,7 @@ public class CatalogueController : ControllerBase
 
         for (int i = 0; i < allCategories.Count(); i++)
         {
-            if (allCategories[i].CategoryCode == newCategory.CategoryCode && allCategories[i].CategoryName == newCategory.CategoryName)
+            if (allCategories[i].CategoryCode == newCategory.CategoryCode)
             {
                 existingCategory = allCategories[i];
             }

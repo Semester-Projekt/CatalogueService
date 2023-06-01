@@ -35,8 +35,6 @@ namespace Model
         [BsonElement("UserAddress")]
         public string? UserAddress { get; set; }
 
-        public List<Artifact>? UsersArtifacts { get; set; }
-
         public UserDTO(int userId, string userName, string userPassword, string userEmail, int userPhone, string userAddress)
         {
             this.UserId = userId;

@@ -350,10 +350,6 @@ public class CatalogueController : ControllerBase
                 _logger.LogInformation($"CatalogueService.GetUser - MongId: {userResponse.MongoId}");
                 _logger.LogInformation($"CatalogueService.GetUser - UserName: {userResponse.UserName}");
 
-                List<Artifact> usersArtifacts = _catalogueRepository.GetAllArtifacts().Result.Where(u => u.ArtifactOwner!.UserName == userResponse.UserName).ToList(); // creates a list of ArtifactDTOs in which the ArtifactOwner matches with the specified UserName
-
-                userResponse.UsersArtifacts = usersArtifacts.Where(a => a.Status != "Deleted").ToList(); // Adds the matching artifacts to the UsersArtifacts attribute on the specified UserDTO
-
                 return Ok(userResponse);
             }
             else

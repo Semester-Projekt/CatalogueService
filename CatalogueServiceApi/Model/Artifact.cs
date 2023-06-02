@@ -22,7 +22,7 @@ namespace Model
 
         [BsonElement("ArtifactDescription")]
         public string? ArtifactDescription { get; set; }
-
+        
         [BsonElement("CategoryCode")]
         public string? CategoryCode { get; set; }
         

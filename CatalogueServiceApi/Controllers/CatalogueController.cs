@@ -508,6 +508,7 @@ public class CatalogueController : ControllerBase
         return Ok($"CatalogueService - Artifact, {updatedArtifact.Result.ArtifactName}, has been updated"); // Returns the newUpdatedArtifact to see the updated info
     }
 
+    [Authorize]
     [HttpPut("updateCategory/{categoryCode}"), DisableRequestSizeLimit] // UpdateCategory endpoint to update Category in _categories
     public async Task<IActionResult> UpdateCategory(string categoryCode, [FromBody] Category? category)
     {
@@ -642,6 +643,7 @@ public class CatalogueController : ControllerBase
         return "CatalogueService - Artifact status changed to 'Deleted'";
     }
 
+    [Authorize]
     [HttpDelete("deleteCategory/{categoryCode}"), DisableRequestSizeLimit] // DeleteCategory endpoint to delete a Category from _categories
     public async Task<IActionResult> DeleteCategory(string categoryCode)
     {
